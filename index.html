@@ -268,7 +268,7 @@ tbody td{padding:11px 16px;font-size:13px;vertical-align:middle;}
   </div>
   <nav class="snav">
     <div class="nsec">Principal</div>
-    <div class="ni active" onclick="showPage('dashboard',this)"><span class="ni-icon">&#127968;</span>Dashboard</div>
+    <div class="ni active" onclick="showPage('dashboard',this)"><span class="ni-icon">&#127968;</span>Resumen PRL</div>
     <div class="nsec">Gesti&#243;n</div>
     <div class="ni" onclick="showPage('calendario',this)"><span class="ni-icon">&#128197;</span>Calendario Formaciones<span class="nbadge w" id="nb-cal">5</span></div>
     <div class="ni" onclick="showPage('formpendientes',this)"><span class="ni-icon">&#9888;&#65039;</span>Formaciones Pendientes<span class="nbadge w" id="nb-fpend">0</span></div>
@@ -295,7 +295,7 @@ tbody td{padding:11px 16px;font-size:13px;vertical-align:middle;}
         <span id="sync-dot-icon" style="width:8px;height:8px;border-radius:50%;background:var(--brd);display:inline-block;transition:background .4s"></span>
         <span id="sync-dot-label">Conectando...</span>
       </div>
-      <button class="btn btn-g" onclick="openModal('trabajador')">&#128100; Trabajador</button>
+      <button class="btn btn-g" onclick="showPage('incorporaciones',null);setTimeout(function(){var btn=document.getElementById('btn-nueva-inc');if(btn)btn.click();},100)">&#10133; Nueva Incorporaci&#243;n</button>
       <button class="btn btn-p" onclick="openModal('formacion')">&#128197; Formaci&#243;n</button>
     </div>
   </header>
@@ -440,7 +440,7 @@ tbody td{padding:11px 16px;font-size:13px;vertical-align:middle;}
       <div class="alert i">El protocolo de acogida debe completarse en los <strong>primeros 3 d&#237;as</strong> desde la incorporaci&#243;n.</div>
       <div class="rowb">
         <span style="font-size:12px;color:var(--txm)" id="inc-count">&#8212;</span>
-        <button class="btn btn-p btn-sm" onclick="openModal('trabajador')">+ Nueva incorporaci&#243;n</button>
+        <button id="btn-nueva-inc" class="btn btn-p btn-sm" onclick="openModal('trabajador')">+ Nueva incorporaci&#243;n</button>
       </div>
       <div class="inclist" id="inc-list"></div>
       <div class="card">
@@ -510,27 +510,11 @@ tbody td{padding:11px 16px;font-size:13px;vertical-align:middle;}
     <div class="page" id="page-enlaces">
       <div class="stitle">Organismos y Normativa</div>
       <div class="ssub">Acceso r&#225;pido a organismos oficiales, normativa y plataformas</div>
-      <div class="qgrid">
-        <a class="qlink" href="https://www.insst.es" target="_blank"><div style="font-size:24px;margin-bottom:6px">&#127983;</div><div style="font-size:11px;font-weight:500;color:var(--txm)">INSST</div></a>
-        <a class="qlink" href="https://www.boe.es" target="_blank"><div style="font-size:24px;margin-bottom:6px">&#128220;</div><div style="font-size:11px;font-weight:500;color:var(--txm)">BOE &#8212; Normativa</div></a>
-        <a class="qlink" href="https://www.mites.gob.es" target="_blank"><div style="font-size:24px;margin-bottom:6px">&#127970;</div><div style="font-size:11px;font-weight:500;color:var(--txm)">Ministerio ITSS</div></a>
-        <a class="qlink" href="https://delta.mites.gob.es" target="_blank"><div style="font-size:24px;margin-bottom:6px">&#128680;</div><div style="font-size:11px;font-weight:500;color:var(--txm)">DELTA Accidentes</div></a>
-        <a class="qlink" href="https://notebooklm.google.com" target="_blank"><div style="font-size:24px;margin-bottom:6px">&#128211;</div><div style="font-size:11px;font-weight:500;color:var(--txm)">NotebookLM</div></a>
-        <a class="qlink" href="https://claude.ai" target="_blank"><div style="font-size:24px;margin-bottom:6px">&#129504;</div><div style="font-size:11px;font-weight:500;color:var(--txm)">Claude AI</div></a>
-        <a class="qlink" href="https://www.boe.es/buscar/act.php?id=BOE-A-1995-24292" target="_blank"><div style="font-size:24px;margin-bottom:6px">&#9878;</div><div style="font-size:11px;font-weight:500;color:var(--txm)">Ley 31/1995 PRL</div></a>
-        <a class="qlink" href="https://www.fraternidad.com" target="_blank"><div style="font-size:24px;margin-bottom:6px">&#127973;</div><div style="font-size:11px;font-weight:500;color:var(--txm)">Mutua / SPA</div></a>
-        <a class="qlink" href="https://siroco.iberdrola.com/sirocoe/login?returnUrl=%2Fworks%2Fdoc-management%2F4523" target="_blank"><div style="font-size:24px;margin-bottom:6px">&#9889;</div><div style="font-size:11px;font-weight:500;color:var(--txm)">Iberdrola Siroco</div></a>
-        <a class="qlink" href="https://lite.e-coordina.com/unibailrodamco" target="_blank"><div style="font-size:24px;margin-bottom:6px">&#128203;</div><div style="font-size:11px;font-weight:500;color:var(--txm)">E-coordina</div></a>
+      <div class="rowb" style="margin-bottom:12px">
+        <div style="font-family:'Syne',sans-serif;font-size:14px;font-weight:700">&#128279; Accesos directos</div>
+        <button class="btn btn-p btn-sm" onclick="openModalEnlace()">+ A&#241;adir enlace</button>
       </div>
-      <div class="card">
-        <div class="card-t">Normativa PRL de referencia</div>
-        <div style="display:flex;flex-direction:column;gap:7px;font-size:12.5px">
-          <div style="display:flex;align-items:center;justify-content:space-between;padding:11px;background:var(--sur2);border-radius:9px;border:1px solid var(--brd)"><div><strong>Ley 31/1995</strong> &middot; Ley de Prevenci&#243;n de Riesgos Laborales</div><a href="https://www.boe.es/buscar/act.php?id=BOE-A-1995-24292" target="_blank" style="color:var(--acc3);font-size:11px;text-decoration:none">Ver &#8594;</a></div>
-          <div style="display:flex;align-items:center;justify-content:space-between;padding:11px;background:var(--sur2);border-radius:9px;border:1px solid var(--brd)"><div><strong>RD 39/1997</strong> &middot; Reglamento de Servicios de Prevenci&#243;n</div><a href="https://www.boe.es/buscar/act.php?id=BOE-A-1997-1853" target="_blank" style="color:var(--acc3);font-size:11px;text-decoration:none">Ver &#8594;</a></div>
-          <div style="display:flex;align-items:center;justify-content:space-between;padding:11px;background:var(--sur2);border-radius:9px;border:1px solid var(--brd)"><div><strong>RD 773/1997</strong> &middot; Utilizaci&#243;n de Equipos de Protecci&#243;n Individual</div><a href="https://www.boe.es/buscar/act.php?id=BOE-A-1997-11588" target="_blank" style="color:var(--acc3);font-size:11px;text-decoration:none">Ver &#8594;</a></div>
-          <div style="display:flex;align-items:center;justify-content:space-between;padding:11px;background:var(--sur2);border-radius:9px;border:1px solid var(--brd)"><div><strong>RD 486/1997</strong> &middot; Seguridad y Salud en Lugares de Trabajo</div><a href="https://www.boe.es/buscar/act.php?id=BOE-A-1997-8669" target="_blank" style="color:var(--acc3);font-size:11px;text-decoration:none">Ver &#8594;</a></div>
-        </div>
-      </div>
+      <div id="enlaces-list" style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:20px"></div>
     </div>
 
   </div>
@@ -562,10 +546,12 @@ tbody td{padding:11px 16px;font-size:13px;vertical-align:middle;}
     <div class="mtitle" id="mf-title">Formaci&#243;n</div><div class="msub">Programa una formaci&#243;n en el calendario PRL.</div>
     <div class="fgrid">
       <div class="full"><label class="flabel">T&#237;tulo *</label><input class="finput" id="f-titulo" type="text" placeholder="Ej: Formaci&#243;n b&#225;sica PRL 20h"></div>
-      <div><label class="flabel">Fecha *</label><input class="finput" id="f-fecha" type="date"></div>
+      <div><label class="flabel">D&#237;as de curso</label><select class="finput" id="f-dias" onchange="updateFechasFormacion()"><option value="1">1 d&#237;a</option><option value="2">2 d&#237;as</option><option value="3">3 d&#237;as</option><option value="4">4 d&#237;as</option><option value="5">5 d&#237;as</option><option value="6">6 d&#237;as</option><option value="7">7 d&#237;as</option><option value="10">10 d&#237;as</option></select></div>
+      <div><label class="flabel">Fecha inicio *</label><input class="finput" id="f-fecha" type="date" onchange="updateFechasFormacion()"></div>
       <div><label class="flabel">Horario</label><input class="finput" id="f-hora" type="text" placeholder="09:00&#8211;14:00"></div>
-      <div><label class="flabel">Lugar</label><input class="finput" id="f-lugar" type="text" placeholder="Sala Reuniones A"></div>
       <div><label class="flabel">Tipo</label><select class="finput" id="f-tipo"><option value="obligatorio">Obligatoria</option><option value="voluntaria">Voluntaria</option><option value="recurrente">Anual/Recurrente</option></select></div>
+      <div class="full" id="f-lugares-wrap" style="display:none"><label class="flabel">Lugar por d&#237;a</label><div id="f-lugares-list"></div></div>
+      <div class="full"><label class="flabel">Lugar (general)</label><input class="finput" id="f-lugar" type="text" placeholder="Sala Reuniones A"></div>
       <div class="full"><label class="flabel">Destinatarios (selecciona operarios)</label><select class="finput" id="f-asist" multiple style="min-height:100px;padding:6px"></select><div style="font-size:10px;color:var(--txm);margin-top:3px">Ctrl+clic para seleccionar varios</div></div>
     </div>
     <div class="ferr" id="f-err">Por favor rellena t&#237;tulo y fecha.</div>
@@ -656,8 +642,11 @@ tbody td{padding:11px 16px;font-size:13px;vertical-align:middle;}
     <div class="msub">Registra una formaci&#243;n a solicitar. Al aprobarla pasa al Calendario.</div>
     <div class="fgrid">
       <div class="full"><label class="flabel">Formaci&#243;n *</label><input class="finput" id="sol-titulo" type="text" placeholder="Ej: Curso TET BT, 60h PRL..."></div>
-      <div class="full"><label class="flabel">Trabajadores afectados</label><select class="finput" id="sol-trabs" multiple style="min-height:90px;padding:6px"></select><div style="font-size:10px;color:var(--txm);margin-top:3px">Ctrl+clic para varios</div></div>
+      <div><label class="flabel">D&#237;as de curso</label><select class="finput" id="sol-dias"><option value="1">1 d&#237;a</option><option value="2">2 d&#237;as</option><option value="3">3 d&#237;as</option><option value="4">4 d&#237;as</option><option value="5">5 d&#237;as</option><option value="6">6 d&#237;as</option><option value="7">7 d&#237;as</option><option value="10">10 d&#237;as</option></select></div>
       <div><label class="flabel">Fecha prevista</label><input class="finput" id="sol-fecha" type="date"></div>
+      <div><label class="flabel">Lugar previsto</label><input class="finput" id="sol-lugar" type="text" placeholder="Sala Reuniones A"></div>
+      <div><label class="flabel">Horario previsto</label><input class="finput" id="sol-hora" type="text" placeholder="09:00&#8211;14:00"></div>
+      <div><label class="flabel">Tipo</label><select class="finput" id="sol-tipo"><option value="obligatorio">Obligatoria</option><option value="voluntaria">Voluntaria</option><option value="recurrente">Anual/Recurrente</option></select></div>
       <div><label class="flabel">Estado</label>
         <select class="finput" id="sol-estado">
           <option value="solicitada">Solicitada</option>
@@ -666,6 +655,7 @@ tbody td{padding:11px 16px;font-size:13px;vertical-align:middle;}
           <option value="cerrada">Cerrada</option>
         </select>
       </div>
+      <div class="full"><label class="flabel">Trabajadores afectados</label><select class="finput" id="sol-trabs" multiple style="min-height:90px;padding:6px"></select><div style="font-size:10px;color:var(--txm);margin-top:3px">Ctrl+clic para varios</div></div>
       <div class="full"><label class="flabel">Observaciones</label><input class="finput" id="sol-obs" type="text" placeholder="Notas adicionales..."></div>
     </div>
     <div class="ferr" id="sol-err">El t&#237;tulo de la formaci&#243;n es obligatorio.</div>
@@ -683,6 +673,20 @@ tbody td{padding:11px 16px;font-size:13px;vertical-align:middle;}
     </div>
     <div class="ferr" id="ca-err">Nombre y URL son obligatorios.</div>
     <div class="mfoot"><button class="btn btn-g" style="flex:1" onclick="closeModal('carpeta')">Cancelar</button><button class="btn btn-p" style="flex:1" id="ca-savebtn" onclick="saveCarpeta()">Guardar</button></div>
+  </div>
+</div>
+
+<div class="moverlay" id="m-enlace" onclick="if(event.target===this)closeModal('enlace')">
+  <div class="modal" style="max-width:440px">
+    <button class="mclose" onclick="closeModal('enlace')">&#215;</button>
+    <div class="mtitle" id="men-title">Nuevo enlace</div><div class="msub">A&#241;ade un acceso directo a organismos o normativa.</div>
+    <div class="fgrid">
+      <div class="full"><label class="flabel">Nombre *</label><input class="finput" id="en-nombre" type="text" placeholder="Ej: INSST, BOE, E-coordina..."></div>
+      <div class="full"><label class="flabel">URL *</label><input class="finput" id="en-url" type="text" placeholder="https://..."></div>
+      <div><label class="flabel">Icono (emoji)</label><input class="finput" id="en-icon" type="text" placeholder="&#128279;" maxlength="2"></div>
+    </div>
+    <div class="ferr" id="en-err">Nombre y URL son obligatorios.</div>
+    <div class="mfoot"><button class="btn btn-g" style="flex:1" onclick="closeModal('enlace')">Cancelar</button><button class="btn btn-p" style="flex:1" id="en-savebtn" onclick="saveEnlace()">Guardar</button></div>
   </div>
 </div>
 
@@ -788,6 +792,7 @@ function guardarAhora(){
     solicitudes:   arrToObj(solicitudes),
     riesgos:       arrToObj(riesgos),
     carpetas:      arrToObj(carpetas),
+    enlaces:       arrToObj(enlaces),
     formCompletadas: (formCompletadas&&Object.keys(formCompletadas).length)?formCompletadas:{__empty:1}
   };
 
@@ -850,6 +855,7 @@ function applyFirebaseData(data){
   if(data.solicitudes   !== undefined){ solicitudes=toArr(data.solicitudes); }
   if(data.riesgos       !== undefined){ riesgos=toArr(data.riesgos); }
   if(data.carpetas      !== undefined){ carpetas=toArr(data.carpetas); }
+  if(data.enlaces       !== undefined){ enlaces=toArr(data.enlaces); }
   if(data.formCompletadas !== undefined){
     if(data.formCompletadas && !data.formCompletadas.__empty) formCompletadas=data.formCompletadas;
     else formCompletadas={};
@@ -871,7 +877,15 @@ function applyData(d){
   if(d.formCompletadas && typeof d.formCompletadas==='object') formCompletadas=d.formCompletadas;
 }
 
+// ── OPEN STATE TRACKER — evita que el polling cierre los desplegables ────
+var _openDropFormacion = null;
+var _openDropWorker = null;
+
 function reloadFromFirebase(silent){
+  // Guarda estado de desplegables antes de rerender
+  var savedFormDrop = _openDropFormacion;
+  var savedWorkerDrop = _openDropWorker;
+
   fetch(FB_URL + '/.json', {cache:'no-store'})
   .then(function(r){
     if(!r.ok) throw new Error('HTTP ' + r.status);
@@ -881,6 +895,17 @@ function reloadFromFirebase(silent){
     applyFirebaseData(data);
     saveLocal();
     renderAll();
+    // Restaura desplegables que estaban abiertos
+    if(savedFormDrop){
+      var d=document.getElementById('drop-'+savedFormDrop);
+      var c=document.getElementById('chev-'+savedFormDrop);
+      if(d){ d.classList.add('open'); if(c) c.classList.add('open'); }
+    }
+    if(savedWorkerDrop){
+      var wd=document.getElementById('wdet-'+savedWorkerDrop);
+      var wc=document.getElementById('wchev-'+savedWorkerDrop);
+      if(wd){ wd.style.display='table-row'; if(wc) wc.textContent='\u25be'; }
+    }
     if(!silent) setSyncStatus('saved');
   })
   .catch(function(e){
@@ -1173,6 +1198,9 @@ function toggleWorkerDetail(id) {
     det.style.display='table-row';
     var ch=document.getElementById('wchev-'+id);
     if(ch) ch.textContent='\u25be';
+    _openDropWorker = id;
+  } else {
+    _openDropWorker = null;
   }
 }
 
@@ -1253,7 +1281,7 @@ function addAct(col,ic,msg) {
 
 // ── NAVIGATION ────────────────────────────────────────────────
 var PAGE_TITLES = {
-  dashboard:'Dashboard GHPRL',calendario:'Calendario de Formaciones',
+  dashboard:'Resumen PRL',calendario:'Calendario de Formaciones',
   formpendientes:'Formaciones Pendientes',
   trabajadores:'Listado de Trabajadores',incorporaciones:'Nuevas Incorporaciones',
   designacion:'Designacion PRL',notebook:'Asistente IA',
@@ -1326,7 +1354,7 @@ function openModal(tipo, id) {
     if(editing){
       var f=findById(formaciones,id);
       if(f){
-        sv('f-titulo',f.titulo);sv('f-fecha',f.fecha);sv('f-hora',f.hora);sv('f-lugar',f.lugar);sv('f-tipo',f.tipo);
+        sv('f-titulo',f.titulo);sv('f-fecha',f.fecha);sv('f-hora',f.hora);sv('f-lugar',f.lugar);sv('f-tipo',f.tipo);sv('f-dias',f.dias||'1');setTimeout(updateFechasFormacion,50);
         var ids=f.asistIds||[];
         for(var i=0;i<fsel.options.length;i++) fsel.options[i].selected=(ids.indexOf(fsel.options[i].value)>=0);
       }
@@ -1417,10 +1445,24 @@ function saveFormacion() {
   var fsel=document.getElementById('f-asist');
   var ids=[];
   if(fsel){for(var i=0;i<fsel.options.length;i++) if(fsel.options[i].selected) ids.push(fsel.options[i].value);}
-  var data={titulo:titulo,fecha:fecha,hora:gv('f-hora')||'-',lugar:gv('f-lugar')||'-',tipo:gv('f-tipo'),asistIds:ids,asistTxt:''};
+  var dias=parseInt(gv('f-dias')||'1');
+  // Recoge lugares por día si hay más de 1
+  var lugares=[];
+  for(var d=0;d<dias;d++){
+    var lEl=document.getElementById('f-lugar-'+d);
+    lugares.push(lEl?lEl.value:gv('f-lugar'));
+  }
+  var data={
+    titulo:titulo, fecha:fecha, dias:dias,
+    hora:gv('f-hora')||'-',
+    lugar:gv('f-lugar')||'-',
+    lugares:lugares,
+    tipo:gv('f-tipo'),
+    asistIds:ids, asistTxt:''
+  };
   var id=editId['formacion'];
-  if(id){updateById(formaciones,id,data);toast('Formacion actualizada');saveRecord('formaciones',Object.assign({id:id},data));}
-  else{data.id=newId();formaciones.push(data);formaciones.sort(function(a,b){return a.fecha>b.fecha?1:-1;});addAct('g','&#128197;','Formacion programada: '+titulo);toast('Formacion anadida');saveRecord('formaciones',data);}
+  if(id){updateById(formaciones,id,data);toast('Formacion actualizada');saveAll();}
+  else{data.id=newId();formaciones.push(data);formaciones.sort(function(a,b){return a.fecha>b.fecha?1:-1;});addAct('g','&#128197;','Formacion programada: '+titulo);toast('Formacion anadida');saveAll();}
   closeModal('formacion');renderAll();
 }
 
@@ -1629,7 +1671,13 @@ function toggleFormacion(id) {
   var allChevs=document.querySelectorAll('.evchev');
   for(var i=0;i<allDrops.length;i++) allDrops[i].classList.remove('open');
   for(var i=0;i<allChevs.length;i++) allChevs[i].classList.remove('open');
-  if(!open){ drop.classList.add('open'); if(chev) chev.classList.add('open'); }
+  if(!open){
+    drop.classList.add('open');
+    if(chev) chev.classList.add('open');
+    _openDropFormacion = id;
+  } else {
+    _openDropFormacion = null;
+  }
 }
 
 function renderFormaciones() {
@@ -1729,7 +1777,7 @@ function renderCalendario() {
   for(var i=1;i<=total;i++){
     var isToday=(today.getDate()===i&&today.getMonth()===calM&&today.getFullYear()===calY);
     var cls='cald'+(isToday?' today':'');
-    if(formDays[i]) html+='<div class="'+cls+'">'+i+'<div class="caldot"></div></div>';
+    if(formDays[i]) html+='<div class="'+cls+'" onclick="goToFormacionesDia('+i+','+calM+','+calY+')" style="cursor:pointer">'+i+'<div class="caldot"></div></div>';
     else html+='<div class="'+cls+'">'+i+'</div>';
   }
   var rest=(7-(offset+total)%7)%7;
@@ -1953,11 +2001,12 @@ function openModalSolicitud(id) {
     var s=findById(solicitudes,id);
     if(s){
       sv('sol-titulo',s.titulo);sv('sol-fecha',s.fecha);sv('sol-estado',s.estado);sv('sol-obs',s.obs||'');
+      sv('sol-dias',s.dias||'1');sv('sol-lugar',s.lugar||'');sv('sol-hora',s.hora||'');sv('sol-tipo',s.tipo||'obligatorio');
       var ids=s.trabIds||[];
       for(var i=0;i<sel.options.length;i++) sel.options[i].selected=(ids.indexOf(sel.options[i].value)>=0);
     }
   } else {
-    clr(['sol-titulo','sol-fecha','sol-obs']);sv('sol-estado','solicitada');
+    clr(['sol-titulo','sol-fecha','sol-obs','sol-lugar','sol-hora']);sv('sol-estado','solicitada');sv('sol-dias','1');sv('sol-tipo','obligatorio');
     for(var i=0;i<sel.options.length;i++) sel.options[i].selected=false;
   }
   document.getElementById('m-solicitud').classList.add('open');
@@ -1970,7 +2019,7 @@ function saveSolicitud() {
   var ids=[];
   if(sel) for(var i=0;i<sel.options.length;i++) if(sel.options[i].selected) ids.push(sel.options[i].value);
   var estadoNuevo=gv('sol-estado');
-  var data={titulo:titulo,fecha:gv('sol-fecha'),estado:estadoNuevo,obs:gv('sol-obs'),trabIds:ids};
+  var data={titulo:titulo,fecha:gv('sol-fecha'),dias:gv('sol-dias')||'1',lugar:gv('sol-lugar')||'',hora:gv('sol-hora')||'',tipo:gv('sol-tipo')||'obligatorio',estado:estadoNuevo,obs:gv('sol-obs'),trabIds:ids};
   var id=editId['solicitud'];
   var anteriorEstado='';
   if(id){
@@ -2085,6 +2134,112 @@ function changeSolEstado(id, nuevoEstado) {
 }
 
 // ── RENDER ALL ────────────────────────────────────────────────
+// ── DÍAS DE FORMACIÓN — actualiza campos por día ──────────────
+function updateFechasFormacion(){
+  var dias=parseInt(gv('f-dias')||'1');
+  var fechaBase=gv('f-fecha');
+  var wrap=document.getElementById('f-lugares-wrap');
+  var list=document.getElementById('f-lugares-list');
+  if(!wrap||!list) return;
+  if(dias<=1||!fechaBase){ wrap.style.display='none'; return; }
+  wrap.style.display='block';
+  var html='';
+  for(var i=0;i<dias;i++){
+    var d=new Date(fechaBase+'T12:00:00');
+    d.setDate(d.getDate()+i);
+    var lbl=d.toLocaleDateString('es-ES',{weekday:'short',day:'numeric',month:'short'});
+    html+='<div style="display:flex;gap:8px;align-items:center;margin-bottom:6px">';
+    html+='<span style="font-size:11px;color:var(--txm);min-width:80px">'+lbl+'</span>';
+    html+='<input class="finput" id="f-lugar-'+i+'" type="text" placeholder="Lugar d&#237;a '+(i+1)+'" style="margin:0">';
+    html+='</div>';
+  }
+  list.innerHTML=html;
+}
+
+// ── CALENDARIO — click en día → scroll a formación ────────────
+function goToFormacionesDia(dia, mes, anio){
+  // Navega a la sección de formaciones y hace scroll a las del día pulsado
+  var fecha=anio+'-'+String(mes+1).padStart(2,'0')+'-'+String(dia).padStart(2,'0');
+  var fsDia=formaciones.filter(function(f){ return f.fecha===fecha || (f.fechas&&f.fechas.indexOf(fecha)>=0); });
+  if(!fsDia.length) return;
+  // Abre el desplegable de la primera coincidencia
+  var f=fsDia[0];
+  var el=document.getElementById('drop-'+f.id);
+  if(el){
+    el.scrollIntoView({behavior:'smooth',block:'start'});
+    setTimeout(function(){ toggleFormacion(f.id); },300);
+  }
+}
+
+// ── ENLACES (Organismos) CRUD ─────────────────────────────────
+var enlaces = [
+  {id:'en001',nombre:'INSST',url:'https://www.insst.es',icon:'&#127983;'},
+  {id:'en002',nombre:'BOE — Normativa',url:'https://www.boe.es',icon:'&#128220;'},
+  {id:'en003',nombre:'Ministerio ITSS',url:'https://www.mites.gob.es',icon:'&#127970;'},
+  {id:'en004',nombre:'DELTA Accidentes',url:'https://delta.mites.gob.es',icon:'&#128680;'},
+  {id:'en005',nombre:'Iberdrola Siroco',url:'https://siroco.iberdrola.com/sirocoe/login',icon:'&#9889;'},
+  {id:'en006',nombre:'E-coordina',url:'https://lite.e-coordina.com/unibailrodamco',icon:'&#128203;'},
+  {id:'en007',nombre:'Ley 31/1995 PRL',url:'https://www.boe.es/buscar/act.php?id=BOE-A-1995-24292',icon:'&#9878;'},
+  {id:'en008',nombre:'Mutua / SPA',url:'https://www.fraternidad.com',icon:'&#127973;'}
+];
+
+function openModalEnlace(id){
+  var allM=['m-trabajador','m-formacion','m-designacion','m-epi','m-herramienta','m-solicitud','m-carpeta','m-enlace'];
+  allM.forEach(function(x){ var e=document.getElementById(x); if(e) e.classList.remove('open'); });
+  editId['enlace']=id||null;
+  var editing=!!id;
+  hideErr('en-err');
+  document.getElementById('men-title').textContent=editing?'Editar enlace':'Nuevo enlace';
+  document.getElementById('en-savebtn').textContent=editing?'Actualizar':'Guardar';
+  if(editing){
+    var en=findById(enlaces,id);
+    if(en){ sv('en-nombre',en.nombre); sv('en-url',en.url); sv('en-icon',en.icon||'&#128279;'); }
+  } else { clr(['en-nombre','en-url']); sv('en-icon','&#128279;'); }
+  document.getElementById('m-enlace').classList.add('open');
+}
+
+function saveEnlace(){
+  var nombre=gv('en-nombre').trim(), url=gv('en-url').trim();
+  if(!nombre||!url){ showErr('en-err'); return; }
+  var data={nombre:nombre, url:url, icon:gv('en-icon')||'&#128279;'};
+  var id=editId['enlace'];
+  if(id){ updateById(enlaces,id,data); toast('Enlace actualizado'); saveAll(); }
+  else { data.id=newId(); enlaces.push(data); toast('Enlace añadido'); saveAll(); }
+  closeModal('enlace');
+  renderEnlaces();
+}
+
+function delEnlace(id){
+  var en=findById(enlaces,id);
+  showConfirm('Eliminar "' +(en?en.nombre:'este enlace')+'"?',function(){
+    enlaces=removeById(enlaces,id);
+    toast('Enlace eliminado','#f85149');
+    saveAll();
+    renderEnlaces();
+  });
+}
+
+function renderEnlaces(){
+  var c=document.getElementById('enlaces-list');
+  if(!c) return;
+  if(!enlaces.length){ c.innerHTML='<div style="color:var(--txm);font-size:12px;padding:8px;grid-column:1/-1">No hay enlaces. Pulsa + Añadir enlace.</div>'; return; }
+  var html='';
+  for(var i=0;i<enlaces.length;i++){
+    var en=enlaces[i];
+    html+='<div style="background:var(--sur);border:1px solid var(--brd);border-radius:11px;padding:14px;display:flex;flex-direction:column;gap:8px">';
+    html+='<div style="display:flex;align-items:center;gap:10px">';
+    html+='<span style="font-size:22px">'+en.icon+'</span>';
+    html+='<div style="flex:1;min-width:0"><div style="font-weight:600;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(en.nombre)+'</div></div>';
+    html+='</div>';
+    html+='<div style="display:flex;gap:6px;align-items:center">';
+    html+='<a href="'+esc(en.url)+'" target="_blank" style="flex:1;color:var(--acc3);font-size:11px;text-decoration:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Abrir &#8594;</a>';
+    html+='<button class="btn btn-sm btn-e" onclick="openModalEnlace(\''+en.id+'\')">Editar</button>';
+    html+='<button class="btn btn-sm btn-d" onclick="delEnlace(\''+en.id+'\')">Borrar</button>';
+    html+='</div></div>';
+  }
+  c.innerHTML=html;
+}
+
 function renderAll() {
   renderTrabajadores();
   renderCalendario();
@@ -2098,6 +2253,7 @@ function renderAll() {
   renderFormPendientes();
   renderSolicitudes();
   renderCarpetas();
+  renderEnlaces();
 }
 
 // ── INIT ──────────────────────────────────────────────────────
