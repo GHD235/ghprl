@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>GHPRL</title>
+<title>GHDPRL</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
 :root{--bg:#0d1117;--sur:#161b22;--sur2:#1c2230;--brd:#2a3547;--acc:#00d4aa;--acc2:#ff6b35;--acc3:#5b8dee;--acc4:#f7c948;--tx:#e6edf3;--txm:#7d8fa8;--danger:#f85149;}
@@ -263,8 +263,8 @@ tbody td{padding:11px 16px;font-size:13px;vertical-align:middle;}
 
 <aside class="sidebar">
   <div class="slogo">
-    <div class="slogo-icon">&#128737;</div>
-    <div><div class="slogo-text">GHPRL</div><div class="slogo-sub">PREVENCI&#211;N RIESGOS LABORALES</div></div>
+    <div class="slogo-icon">&#128119;&#127995;&#8205;&#9794;&#65039;</div>
+    <div><div class="slogo-text">GHDPRL</div><div class="slogo-sub">PREVENCI&#211;N RIESGOS LABORALES</div></div>
   </div>
   <nav class="snav">
     <div class="nsec">Principal</div>
@@ -276,7 +276,7 @@ tbody td{padding:11px 16px;font-size:13px;vertical-align:middle;}
     <div class="ni" onclick="showPage('incorporaciones',this)"><span class="ni-icon">&#10024;</span>Nuevas Incorporaciones<span class="nbadge" id="nb-inc">0</span></div>
     <div class="ni" onclick="showPage('designacion',this)"><span class="ni-icon">&#127919;</span>Designaci&#243;n PRL</div>
     <div class="nsec">Recursos</div>
-    <div class="ni" onclick="showPage('notebook',this)"><span class="ni-icon">&#129504;</span>IA &#8212; Cuadernillos<span class="nbadge i">AI</span></div>
+    <div class="ni" onclick="showPage('notebook',this)"><span class="ni-icon">&#129504;</span>IA &#8212; Normativa<span class="nbadge i">AI</span></div>
     <div class="ni" onclick="showPage('documentos',this)"><span class="ni-icon">&#128193;</span>Documentaci&#243;n</div>
     <div class="ni" onclick="showPage('equipos',this)"><span class="ni-icon">&#129686;</span>Revisi&#243;n EPIs</div>
     <div class="nsec">Accesos</div>
@@ -287,7 +287,7 @@ tbody td{padding:11px 16px;font-size:13px;vertical-align:middle;}
 
 <div class="main">
   <header class="topbar">
-    <div class="tbtitle" id="tbtitle">Dashboard PRL</div>
+    <div class="tbtitle" id="tbtitle">Resumen PRL</div>
     <div class="tbright">
       <span class="tbdate" id="tbdate"></span>
       <span class="sync-pill idle" id="sync-pill"></span>
@@ -295,7 +295,7 @@ tbody td{padding:11px 16px;font-size:13px;vertical-align:middle;}
         <span id="sync-dot-icon" style="width:8px;height:8px;border-radius:50%;background:var(--brd);display:inline-block;transition:background .4s"></span>
         <span id="sync-dot-label">Conectando...</span>
       </div>
-      <button class="btn btn-g" onclick="showPage('incorporaciones',null);setTimeout(function(){var btn=document.getElementById('btn-nueva-inc');if(btn)btn.click();},100)">&#10133; Nueva Incorporaci&#243;n</button>
+      <button class="btn" style="background:rgba(91,141,238,.15);color:#5b8dee;border:1px solid rgba(91,141,238,.4)" onclick="openModal('trabajador')">&#10133; Nueva Incorporaci&#243;n</button>
       <button class="btn btn-p" onclick="openModal('formacion')">&#128197; Formaci&#243;n</button>
     </div>
   </header>
@@ -318,9 +318,15 @@ tbody td{padding:11px 16px;font-size:13px;vertical-align:middle;}
       </div>
       <div style="font-family:'Syne',sans-serif;font-size:16px;font-weight:700;margin-bottom:13px">Accesos directos</div>
       <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:13px">
-        <div class="nbcard" onclick="showPage('calendario',null)" style="cursor:pointer"><div class="nbicon" style="background:rgba(0,212,170,.15)">&#128197;</div><div class="nbtitle">Calendario</div><div class="nbdesc">Planifica y gestiona todas las formaciones PRL del a&#241;o.</div></div>
-        <div class="nbcard" onclick="showPage('trabajadores',null)" style="cursor:pointer"><div class="nbicon">&#128101;</div><div class="nbtitle">Trabajadores</div><div class="nbdesc">Fichas, estado formativo, aptitud m&#233;dica y EPIs.</div></div>
-        <div class="nbcard" onclick="showPage('notebook',null)" style="cursor:pointer"><div class="nbicon" style="background:rgba(163,113,247,.15)">&#129504;</div><div class="nbtitle">Asistente IA</div><div class="nbdesc">Consulta cuadernillos con inteligencia artificial.</div></div>
+        <div class="nbcard" onclick="showPage('calendario',null)" style="cursor:pointer"><div class="nbicon" style="background:rgba(0,212,170,.15)">&#128197;</div><div class="nbtitle">Calendario Formaciones</div><div class="nbdesc">Planifica y gestiona todas las formaciones PRL.</div></div>
+        <div class="nbcard" onclick="showPage('formpendientes',null)" style="cursor:pointer"><div class="nbicon" style="background:rgba(247,201,72,.15)">&#9888;&#65039;</div><div class="nbtitle">Formaciones Pendientes</div><div class="nbdesc">Trabajadores con formaciones por completar.</div></div>
+        <div class="nbcard" onclick="showPage('trabajadores',null)" style="cursor:pointer"><div class="nbicon">&#128101;</div><div class="nbtitle">Listado Trabajadores</div><div class="nbdesc">Fichas, estado formativo, aptitud m&#233;dica y EPIs.</div></div>
+        <div class="nbcard" onclick="showPage('incorporaciones',null)" style="cursor:pointer"><div class="nbicon" style="background:rgba(91,141,238,.15)">&#10024;</div><div class="nbtitle">Nuevas Incorporaciones</div><div class="nbdesc">Protocolo de acogida PRL.</div></div>
+        <div class="nbcard" onclick="showPage('designacion',null)" style="cursor:pointer"><div class="nbicon" style="background:rgba(248,81,73,.15)">&#127919;</div><div class="nbtitle">Designaci&#243;n PRL</div><div class="nbdesc">Responsables y trabajadores designados.</div></div>
+        <div class="nbcard" onclick="showPage('notebook',null)" style="cursor:pointer"><div class="nbicon" style="background:rgba(163,113,247,.15)">&#129504;</div><div class="nbtitle">IA &#8212; Normativa</div><div class="nbdesc">Asistente IA para resumen normativa PRL.</div></div>
+        <div class="nbcard" onclick="showPage('documentos',null)" style="cursor:pointer"><div class="nbicon" style="background:rgba(247,201,72,.15)">&#128193;</div><div class="nbtitle">Documentaci&#243;n</div><div class="nbdesc">Carpetas compartidas y repositorio PRL.</div></div>
+        <div class="nbcard" onclick="showPage('equipos',null)" style="cursor:pointer"><div class="nbicon" style="background:rgba(0,212,170,.15)">&#129686;</div><div class="nbtitle">Revisi&#243;n EPIs</div><div class="nbdesc">Control de equipos de protecci&#243;n individual.</div></div>
+        <div class="nbcard" onclick="showPage('enlaces',null)" style="cursor:pointer"><div class="nbicon" style="background:rgba(91,141,238,.15)">&#128279;</div><div class="nbtitle">Organismos y Normativa</div><div class="nbdesc">Accesos directos a organismos oficiales.</div></div>
       </div>
     </div>
 
@@ -355,8 +361,17 @@ tbody td{padding:11px 16px;font-size:13px;vertical-align:middle;}
       <div class="stitle">Formaciones Pendientes</div>
       <div class="ssub">Formaciones requeridas seg&#250;n perfil y seguimiento de solicitudes</div>
 
-      <!-- BARRA BÚSQUEDA Y FILTROS -->
-      <div style="display:flex;gap:9px;flex-wrap:wrap;margin-bottom:16px;align-items:center">
+      <!-- BLOQUE 1: trabajadores con pendientes (sin búsqueda — evita marcar accidentalmente) -->
+      <div style="font-family:'Syne',sans-serif;font-size:15px;font-weight:700;margin-bottom:4px">&#9888; Con formaciones pendientes</div>
+      <div style="font-size:12px;color:var(--txm);margin-bottom:12px">Pulsa una formaci&#243;n para marcarla como completada. Cuando <strong>tachada</strong> queda registrada.</div>
+      <div id="form-pending-list" style="margin-bottom:28px"></div>
+
+      <!-- BLOQUE 2: trabajadores con formación completa (con buscador) -->
+      <div style="font-family:'Syne',sans-serif;font-size:15px;font-weight:700;margin-bottom:4px">&#9989; Con formaciones completas</div>
+      <div style="font-size:12px;color:var(--txm);margin-bottom:12px">Pulsa una formaci&#243;n tachada para desmarcararla y mover al trabajador a pendientes.</div>
+
+      <!-- BARRA BÚSQUEDA Y FILTROS para completados -->
+      <div style="display:flex;gap:9px;flex-wrap:wrap;margin-bottom:12px;align-items:center">
         <div class="sbox" style="max-width:260px;flex:1">
           &#128269; <input type="text" id="fp-search" placeholder="Buscar por nombre..." oninput="renderFormPendientes()">
         </div>
@@ -373,14 +388,6 @@ tbody td{padding:11px 16px;font-size:13px;vertical-align:middle;}
         </select>
       </div>
 
-      <!-- BLOQUE 1: trabajadores con pendientes -->
-      <div style="font-family:'Syne',sans-serif;font-size:15px;font-weight:700;margin-bottom:4px">&#9888; Con formaciones pendientes</div>
-      <div style="font-size:12px;color:var(--txm);margin-bottom:12px">Pulsa una formaci&#243;n para marcarla como completada. Cuando <strong>tachada</strong> queda registrada.</div>
-      <div id="form-pending-list" style="margin-bottom:28px"></div>
-
-      <!-- BLOQUE 2: trabajadores con formación completa -->
-      <div style="font-family:'Syne',sans-serif;font-size:15px;font-weight:700;margin-bottom:4px">&#9989; Con formaciones completas</div>
-      <div style="font-size:12px;color:var(--txm);margin-bottom:12px">Pulsa una formaci&#243;n tachada para desmarcararla y mover al trabajador a pendientes.</div>
       <div id="form-done-list" style="margin-bottom:28px"></div>
 
       <!-- BLOQUE 2: solicitudes de formación -->
@@ -445,11 +452,7 @@ tbody td{padding:11px 16px;font-size:13px;vertical-align:middle;}
       <div class="inclist" id="inc-list"></div>
       <div class="card">
         <div class="card-t">Protocolo de acogida PRL</div>
-        <div style="display:flex;flex-direction:column;gap:9px;font-size:13px">
-          <div style="display:flex;align-items:center;gap:12px;padding:14px;background:var(--sur2);border-radius:10px;border:1px solid var(--brd)"><span style="font-size:22px">&#127891;</span><div><div style="font-weight:600;font-size:14px">TPC</div><div style="font-size:11px;color:var(--txm);margin-top:2px">Formaci&#243;n inicial del sector</div></div></div>
-          <div style="display:flex;align-items:center;gap:12px;padding:14px;background:var(--sur2);border-radius:10px;border:1px solid var(--brd)"><span style="font-size:22px">&#127973;</span><div><div style="font-weight:600;font-size:14px">Reconocimiento M&#233;dico</div><div style="font-size:11px;color:var(--txm);margin-top:2px">Reconocimiento m&#233;dico inicial de aptitud para el puesto</div></div></div>
-          <div style="display:flex;align-items:center;gap:12px;padding:14px;background:var(--sur2);border-radius:10px;border:1px solid var(--brd)"><span style="font-size:22px">&#129686;</span><div><div style="font-weight:600;font-size:14px">Formaci&#243;n empresa y entrega EPIs</div><div style="font-size:11px;color:var(--txm);margin-top:2px">Recib&#237; informaci&#243;n, compromisos PRL y EPIs</div></div></div>
-        </div>
+        <div style="display:flex;flex-direction:column;gap:9px;font-size:13px" id="protocolo-list"></div>
       </div>
     </div>
 
@@ -466,7 +469,7 @@ tbody td{padding:11px 16px;font-size:13px;vertical-align:middle;}
 
     <!-- NOTEBOOK -->
     <div class="page" id="page-notebook">
-      <div class="stitle">Asistente IA &#8212; Cuadernillos PRL</div>
+      <div class="stitle">Asistente IA &#8212; Resumen Normativa PRL</div>
       <div class="ssub">Acceso directo a herramientas de inteligencia artificial para consultar documentaci&#243;n PRL</div>
       <div class="alert s">Conectado con herramientas IA especializadas en PRL &#8212; edita, a&#241;ade o elimina seg&#250;n tus necesidades</div>
       <div class="rowb" style="margin-bottom:16px">
@@ -550,9 +553,9 @@ tbody td{padding:11px 16px;font-size:13px;vertical-align:middle;}
       <div><label class="flabel">Fecha inicio *</label><input class="finput" id="f-fecha" type="date" onchange="updateFechasFormacion()"></div>
       <div><label class="flabel">Horario</label><input class="finput" id="f-hora" type="text" placeholder="09:00&#8211;14:00"></div>
       <div><label class="flabel">Tipo</label><select class="finput" id="f-tipo"><option value="obligatorio">Obligatoria</option><option value="voluntaria">Voluntaria</option><option value="recurrente">Anual/Recurrente</option></select></div>
-      <div class="full" id="f-lugares-wrap" style="display:none"><label class="flabel">Lugar por d&#237;a</label><div id="f-lugares-list"></div></div>
+      <div class="full" id="f-lugares-wrap" style="display:none"><label class="flabel">Detalle por d&#237;a (fecha, horario y lugar)</label><div id="f-lugares-list"></div></div>
       <div class="full"><label class="flabel">Lugar (general)</label><input class="finput" id="f-lugar" type="text" placeholder="Sala Reuniones A"></div>
-      <div class="full"><label class="flabel">Destinatarios (selecciona operarios)</label><select class="finput" id="f-asist" multiple style="min-height:100px;padding:6px"></select><div style="font-size:10px;color:var(--txm);margin-top:3px">Ctrl+clic para seleccionar varios</div></div>
+      <div class="full"><label class="flabel">Destinatarios (selecciona uno o varios trabajadores)</label><div id="f-asist-list" style="max-height:180px;overflow-y:auto;background:var(--sur2);border:1px solid var(--brd);border-radius:8px;padding:8px"></div><div style="font-size:10px;color:var(--txm);margin-top:3px">Pulsa cada nombre para seleccionar. Vuelve a pulsar para deseleccionar.</div></div>
     </div>
     <div class="ferr" id="f-err">Por favor rellena t&#237;tulo y fecha.</div>
     <div class="mfoot"><button class="btn btn-g" style="flex:1" onclick="closeModal('formacion')">Cancelar</button><button class="btn btn-p" style="flex:1" id="f-savebtn" onclick="saveFormacion()">Guardar</button></div>
@@ -655,7 +658,7 @@ tbody td{padding:11px 16px;font-size:13px;vertical-align:middle;}
           <option value="cerrada">Cerrada</option>
         </select>
       </div>
-      <div class="full"><label class="flabel">Trabajadores afectados</label><select class="finput" id="sol-trabs" multiple style="min-height:90px;padding:6px"></select><div style="font-size:10px;color:var(--txm);margin-top:3px">Ctrl+clic para varios</div></div>
+      <div class="full"><label class="flabel">Trabajadores afectados</label><div id="sol-trabs-list" style="max-height:180px;overflow-y:auto;background:var(--sur2);border:1px solid var(--brd);border-radius:8px;padding:8px"></div><div style="font-size:10px;color:var(--txm);margin-top:3px">Pulsa cada nombre para seleccionar. Vuelve a pulsar para deseleccionar.</div></div>
       <div class="full"><label class="flabel">Observaciones</label><input class="finput" id="sol-obs" type="text" placeholder="Notas adicionales..."></div>
     </div>
     <div class="ferr" id="sol-err">El t&#237;tulo de la formaci&#243;n es obligatorio.</div>
@@ -673,6 +676,21 @@ tbody td{padding:11px 16px;font-size:13px;vertical-align:middle;}
     </div>
     <div class="ferr" id="ca-err">Nombre y URL son obligatorios.</div>
     <div class="mfoot"><button class="btn btn-g" style="flex:1" onclick="closeModal('carpeta')">Cancelar</button><button class="btn btn-p" style="flex:1" id="ca-savebtn" onclick="saveCarpeta()">Guardar</button></div>
+  </div>
+</div>
+
+<div class="moverlay" id="m-protocolo" onclick="if(event.target===this)closeModal('protocolo')">
+  <div class="modal" style="max-width:440px">
+    <button class="mclose" onclick="closeModal('protocolo')">&#215;</button>
+    <div class="mtitle" id="mpr-title">Elemento del protocolo</div><div class="msub">A&#241;ade o edita un paso del protocolo de acogida.</div>
+    <div class="fgrid">
+      <div class="full"><label class="flabel">T&#237;tulo *</label><input class="finput" id="pr-titulo" type="text" placeholder="Ej: TPC, Reconocimiento M&#233;dico..."></div>
+      <div class="full"><label class="flabel">Descripci&#243;n</label><input class="finput" id="pr-desc" type="text" placeholder="Detalle del paso"></div>
+      <div class="full"><label class="flabel">URL (opcional)</label><input class="finput" id="pr-url" type="text" placeholder="https://..."></div>
+      <div><label class="flabel">Icono (emoji)</label><input class="finput" id="pr-icon" type="text" placeholder="&#128203;" maxlength="2"></div>
+    </div>
+    <div class="ferr" id="pr-err">El t&#237;tulo es obligatorio.</div>
+    <div class="mfoot"><button class="btn btn-g" style="flex:1" onclick="closeModal('protocolo')">Cancelar</button><button class="btn btn-p" style="flex:1" id="pr-savebtn" onclick="saveProtocolo()">Guardar</button></div>
   </div>
 </div>
 
@@ -793,6 +811,7 @@ function guardarAhora(){
     riesgos:       arrToObj(riesgos),
     carpetas:      arrToObj(carpetas),
     enlaces:       arrToObj(enlaces),
+    protocolo:     arrToObj(protocolo),
     formCompletadas: (formCompletadas&&Object.keys(formCompletadas).length)?formCompletadas:{__empty:1}
   };
 
@@ -856,6 +875,7 @@ function applyFirebaseData(data){
   if(data.riesgos       !== undefined){ riesgos=toArr(data.riesgos); }
   if(data.carpetas      !== undefined){ carpetas=toArr(data.carpetas); }
   if(data.enlaces       !== undefined){ enlaces=toArr(data.enlaces); }
+  if(data.protocolo     !== undefined){ protocolo=toArr(data.protocolo); }
   if(data.formCompletadas !== undefined){
     if(data.formCompletadas && !data.formCompletadas.__empty) formCompletadas=data.formCompletadas;
     else formCompletadas={};
@@ -970,8 +990,8 @@ function saveCarpeta(){
   if(!nombre||!url){ showErr('ca-err'); return; }
   var data={nombre:nombre, url:url};
   var id=editId['carpeta'];
-  if(id){ updateById(carpetas,id,data); toast('Carpeta actualizada'); saveRecord('carpetas',Object.assign({id:id},data)); }
-  else { data.id=newId(); carpetas.push(data); toast('Carpeta anadida'); saveRecord('carpetas',data); }
+  if(id){ updateById(carpetas,id,data); toast('Carpeta actualizada'); saveAll(); }
+  else { data.id=newId(); carpetas.push(data); addAct('p','&#128194;','Carpeta añadida: '+nombre); toast('Carpeta anadida'); saveAll(); }
   closeModal('carpeta');
   renderCarpetas();
 }
@@ -994,12 +1014,12 @@ function renderCarpetas(){
   for(var i=0;i<carpetas.length;i++){
     var ca=carpetas[i];
     var domain=''; try{ domain=new URL(ca.url).hostname; }catch(e){ domain=ca.url.slice(0,30); }
-    html+='<div style="display:flex;align-items:center;gap:10px;padding:11px 14px;background:var(--sur);border:1px solid var(--brd);border-radius:10px">';
+    html+='<div onclick="window.open(\''+esc(ca.url)+'\',\'_blank\')" style="display:flex;align-items:center;gap:10px;padding:11px 14px;background:var(--sur);border:1px solid var(--brd);border-radius:10px;cursor:pointer;transition:border-color .15s" onmouseover="this.style.borderColor=\'#4285f4\'" onmouseout="this.style.borderColor=\'var(--brd)\'">';
     html+='<span style="font-size:18px">&#128194;</span>';
     html+='<div style="flex:1;min-width:0"><div style="font-weight:600;font-size:13px">'+esc(ca.nombre)+'</div><div style="font-size:10px;color:var(--txm)">'+esc(domain)+'</div></div>';
-    html+='<a href="'+esc(ca.url)+'" target="_blank" style="color:#4285f4;font-size:11px;text-decoration:none;white-space:nowrap">Abrir &#8594;</a>';
-    html+='<button class="btn btn-sm btn-e" style="margin-left:6px" onclick="openModalCarpeta(\''+ca.id+'\')">Editar</button>';
-    html+='<button class="btn btn-sm btn-d" onclick="delCarpeta(\''+ca.id+'\')">Borrar</button>';
+    html+='<span style="color:#4285f4;font-size:11px;white-space:nowrap">Abrir &#8594;</span>';
+    html+='<button class="btn btn-sm btn-e" style="margin-left:6px" onclick="event.stopPropagation();openModalCarpeta(\''+ca.id+'\')">Editar</button>';
+    html+='<button class="btn btn-sm btn-d" onclick="event.stopPropagation();delCarpeta(\''+ca.id+'\')">Borrar</button>';
     html+='</div>';
   }
   c.innerHTML=html;
@@ -1110,9 +1130,6 @@ function renderFormPendientes() {
     var wt = trabajadores[wi];
     var wreqs = getFormReq(wt.caps||[], wt.puesto);
     if(!wreqs.length) continue;
-    if(busq && wt.nombre.toLowerCase().indexOf(busq)<0) continue;
-    if(filPues && wt.puesto !== filPues) continue;
-    if(filEnc  && wt.dept  !== filEnc)  continue;
     var wpending=[], wdone=[];
     for(var wj=0;wj<wreqs.length;wj++){
       if(hasFormCompletada(wt.id,wreqs[wj])) wdone.push(wreqs[wj]);
@@ -1120,8 +1137,18 @@ function renderFormPendientes() {
     }
     var wac=avCol(wt.nombre);
     var wencStr=wt.dept?' &middot; Enc: '+esc(wt.dept):'';
-    if(wpending.length>0){ anyPending=true; pending_html+=_makeCard(wpending,wdone,false,wt,wac,wencStr); }
-    else if(wdone.length>0){ anyDone=true; done_html+=_makeCard([],wdone,true,wt,wac,wencStr); }
+    if(wpending.length>0){
+      // Pendientes — sin filtros (siempre se muestran todos)
+      anyPending=true;
+      pending_html+=_makeCard(wpending,wdone,false,wt,wac,wencStr);
+    } else if(wdone.length>0){
+      // Completados — aquí se aplican filtros y búsqueda
+      if(busq && wt.nombre.toLowerCase().indexOf(busq)<0) continue;
+      if(filPues && wt.puesto !== filPues) continue;
+      if(filEnc  && wt.dept  !== filEnc)  continue;
+      anyDone=true;
+      done_html+=_makeCard([],wdone,true,wt,wac,wencStr);
+    }
   }
 
   var cp=document.getElementById('form-pending-list');
@@ -1284,7 +1311,7 @@ var PAGE_TITLES = {
   dashboard:'Resumen PRL',calendario:'Calendario de Formaciones',
   formpendientes:'Formaciones Pendientes',
   trabajadores:'Listado de Trabajadores',incorporaciones:'Nuevas Incorporaciones',
-  designacion:'Designacion PRL',notebook:'Asistente IA',
+  designacion:'Designacion PRL',notebook:'Asistente IA — Resumen Normativa PRL',
   documentos:'Documentacion',equipos:'Revision EPIs',enlaces:'Organismos y Normativa'
 };
 
@@ -1311,7 +1338,7 @@ function showPage(id, navEl) {
 }
 
 // ── MODALS ────────────────────────────────────────────────────
-function openModal(tipo, id) {
+function openModal(tipo, id, focusField) {
   var allM=['m-trabajador','m-formacion','m-designacion','m-documento','m-riesgo','m-epi','m-herramienta','m-solicitud'];
   for(var i=0;i<allM.length;i++) document.getElementById(allM[i]).classList.remove('open');
   editId[tipo]=id||null;
@@ -1337,28 +1364,45 @@ function openModal(tipo, id) {
       if(t){sv('w-nombre',t.nombre);sv('w-dept',t.dept||'');sv('w-puesto',t.puesto);sv('w-fecha',t.fecha);sv('w-form',t.form);sv('w-med',t.med);sv('w-epis',t.epis);renderCapSelector(t.caps||[]);}
     } else { clr(['w-nombre','w-fecha','w-epis']);sv('w-dept','');sv('w-puesto','');sv('w-form','pendiente');sv('w-med','pendiente');renderCapSelector([]); }
     document.getElementById('m-trabajador').classList.add('open');
+    if(focusField){
+      setTimeout(function(){
+        var fEl=document.getElementById(focusField);
+        if(fEl){
+          fEl.focus();
+          fEl.scrollIntoView({behavior:'smooth',block:'center'});
+          fEl.style.outline='2px solid var(--acc3)';
+          setTimeout(function(){ fEl.style.outline=''; },2000);
+        }
+      },200);
+    }
   }
   if(tipo==='formacion'){
     hideErr('f-err');
     document.getElementById('mf-title').textContent=editing?'Editar Formacion':'Nueva Formacion';
     document.getElementById('f-savebtn').textContent=editing?'Actualizar':'Guardar';
-    // Populate workers multi-select
-    var fsel=document.getElementById('f-asist');
-    fsel.innerHTML='';
-    for(var i=0;i<trabajadores.length;i++){
-      var op=document.createElement('option');
-      op.value=trabajadores[i].id;
-      op.textContent=trabajadores[i].nombre+' ('+trabajadores[i].puesto+')';
-      fsel.appendChild(op);
+    // Populate workers checkbox list
+    var fselectedIds=[];
+    if(editing){ var ff=findById(formaciones,id); if(ff) fselectedIds=ff.asistIds||[]; }
+    var fAsistC=document.getElementById('f-asist-list');
+    if(fAsistC){
+      var fhtml='';
+      if(!trabajadores.length){
+        fhtml='<div style="color:var(--txm);font-size:11px;padding:6px">No hay trabajadores registrados.</div>';
+      } else {
+        for(var i=0;i<trabajadores.length;i++){
+          var tw=trabajadores[i];
+          var checked=fselectedIds.indexOf(tw.id)>=0?'checked':'';
+          fhtml+='<label style="display:flex;align-items:center;gap:8px;padding:5px 6px;cursor:pointer;border-radius:5px;font-size:12px" onmouseover="this.style.background=\'var(--sur)\'" onmouseout="this.style.background=\'\'"><input type="checkbox" class="f-asist-cb" value="'+tw.id+'" '+checked+' style="width:15px;height:15px;cursor:pointer"><span>'+esc(tw.nombre)+' <span style="color:var(--txm);font-size:10px">('+esc(tw.puesto)+')</span></span></label>';
+        }
+      }
+      fAsistC.innerHTML=fhtml;
     }
     if(editing){
       var f=findById(formaciones,id);
       if(f){
         sv('f-titulo',f.titulo);sv('f-fecha',f.fecha);sv('f-hora',f.hora);sv('f-lugar',f.lugar);sv('f-tipo',f.tipo);sv('f-dias',f.dias||'1');setTimeout(updateFechasFormacion,50);
-        var ids=f.asistIds||[];
-        for(var i=0;i<fsel.options.length;i++) fsel.options[i].selected=(ids.indexOf(fsel.options[i].value)>=0);
       }
-    } else { clr(['f-titulo','f-fecha','f-hora','f-lugar']);sv('f-tipo','obligatorio');for(var i=0;i<fsel.options.length;i++)fsel.options[i].selected=false; }
+    } else { clr(['f-titulo','f-fecha','f-hora','f-lugar']);sv('f-tipo','obligatorio');sv('f-dias','1'); }
     document.getElementById('m-formacion').classList.add('open');
   }
   if(tipo==='designacion'){
@@ -1442,21 +1486,26 @@ function saveTrabajador() {
 function saveFormacion() {
   var titulo=gv('f-titulo').trim(),fecha=gv('f-fecha');
   if(!titulo||!fecha){showErr('f-err');return;}
-  var fsel=document.getElementById('f-asist');
+  // Read checkboxes
   var ids=[];
-  if(fsel){for(var i=0;i<fsel.options.length;i++) if(fsel.options[i].selected) ids.push(fsel.options[i].value);}
+  var cbs=document.querySelectorAll('.f-asist-cb');
+  for(var i=0;i<cbs.length;i++) if(cbs[i].checked) ids.push(cbs[i].value);
   var dias=parseInt(gv('f-dias')||'1');
-  // Recoge lugares por día si hay más de 1
-  var lugares=[];
+  // Recoge fechas/lugares/horarios por día si hay más de 1
+  var lugares=[], fechas=[], horarios=[];
   for(var d=0;d<dias;d++){
     var lEl=document.getElementById('f-lugar-'+d);
+    var fEl=document.getElementById('f-fecha-'+d);
+    var hEl=document.getElementById('f-hora-'+d);
     lugares.push(lEl?lEl.value:gv('f-lugar'));
+    fechas.push(fEl?fEl.value:fecha);
+    horarios.push(hEl?hEl.value:gv('f-hora'));
   }
   var data={
     titulo:titulo, fecha:fecha, dias:dias,
     hora:gv('f-hora')||'-',
     lugar:gv('f-lugar')||'-',
-    lugares:lugares,
+    lugares:lugares, fechas:fechas, horarios:horarios,
     tipo:gv('f-tipo'),
     asistIds:ids, asistTxt:''
   };
@@ -1471,8 +1520,8 @@ function saveDesignacion() {
   if(!rol||!nombre){showErr('d-err');return;}
   var data={rol:rol,nombre:nombre,area:gv('d-area'),vig:gv('d-vig'),obs:gv('d-obs'),tel:gv('d-tel'),email:gv('d-email')};
   var id=editId['designacion'];
-  if(id){updateById(designaciones,id,data);toast('Designacion actualizada');saveRecord('designaciones',Object.assign({id:id},data));}
-  else{data.id=newId();designaciones.push(data);toast('Designacion anadida');saveRecord('designaciones',data);}
+  if(id){updateById(designaciones,id,data);toast('Designacion actualizada');saveAll();}
+  else{data.id=newId();designaciones.push(data);addAct('b','&#127919;','Designación añadida: '+rol+' &middot; '+nombre);toast('Designacion anadida');saveAll();}
   closeModal('designacion');renderAll();
 }
 
@@ -1481,8 +1530,8 @@ function saveDocumento() {
   if(!nombre){showErr('do-err');return;}
   var data={nombre:nombre,tipo:gv('do-tipo'),fecha:gv('do-fecha'),obs:gv('do-obs')};
   var id=editId['documento'];
-  if(id){updateById(documentos,id,data);toast('Documento actualizado');saveRecord('documentos',Object.assign({id:id},data));}
-  else{data.id=newId();documentos.push(data);toast('Documento anadido');saveRecord('documentos',data);}
+  if(id){updateById(documentos,id,data);toast('Documento actualizado');saveAll();}
+  else{data.id=newId();documentos.push(data);addAct('p','&#128196;','Documento añadido: '+nombre);toast('Documento anadido');saveAll();}
   closeModal('documento');renderAll();
 }
 
@@ -1491,8 +1540,8 @@ function saveRiesgo() {
   if(!desc){showErr('r-err');return;}
   var data={desc:desc,nivel:gv('r-nivel')};
   var id=editId['riesgo'];
-  if(id){updateById(riesgos,id,data);toast('Riesgo actualizado');saveRecord('riesgos',Object.assign({id:id},data));}
-  else{data.id=newId();riesgos.push(data);toast('Riesgo registrado');saveRecord('riesgos',data);}
+  if(id){updateById(riesgos,id,data);toast('Riesgo actualizado');saveAll();}
+  else{data.id=newId();riesgos.push(data);addAct('o','&#9888;','Riesgo registrado: '+desc);toast('Riesgo registrado');saveAll();}
   closeModal('riesgo');renderAll();
 }
 
@@ -1501,8 +1550,8 @@ function saveEpi() {
   if(!nombre){showErr('e-err');return;}
   var data={nombre:nombre,trabId:gv('e-trab'),rev:gv('e-rev'),estado:gv('e-estado')};
   var id=editId['epi'];
-  if(id){updateById(epis,id,data);toast('Revision EPI actualizada');saveRecord('epis',Object.assign({id:id},data));}
-  else{data.id=newId();epis.push(data);toast('Revision EPI anadida');saveRecord('epis',data);}
+  if(id){updateById(epis,id,data);toast('Revision EPI actualizada');saveAll();}
+  else{data.id=newId();epis.push(data);addAct('g','&#129686;','Revisión EPI añadida: '+nombre);toast('Revision EPI anadida');saveAll();}
   closeModal('epi');renderAll();
 }
 
@@ -1516,7 +1565,14 @@ function delTrabajador(id) {
 function delFormacion(id) {
   var f=findById(formaciones,id);
   showConfirm('Eliminar "'+(f?f.titulo:'esta formacion')+'"?',function(){
-    formaciones=removeById(formaciones,id);toast('Formacion eliminada','#f85149');deleteRecord('formaciones',id);renderAll();
+    // Vínculo bidireccional: si esta formación viene de una solicitud, eliminarla también
+    if(f && f.solId){
+      solicitudes=solicitudes.filter(function(s){ return s.id!==f.solId; });
+    }
+    formaciones=removeById(formaciones,id);
+    toast('Formacion eliminada','#f85149');
+    saveAll();
+    renderAll();
   });
 }
 function delDesignacion(id) {
@@ -1549,8 +1605,8 @@ function saveHerramienta() {
   if(!nombre||!url){showErr('h-err');return;}
   var data={nombre:nombre,url:url,desc:gv('h-desc'),icon:gv('h-icon')||'&#128279;'};
   var id=editId['herramienta'];
-  if(id){updateById(herramientas,id,data);toast('Herramienta actualizada');saveRecord('herramientas',Object.assign({id:id},data));}
-  else{data.id=newId();herramientas.push(data);toast('Herramienta anadida');saveRecord('herramientas',data);}
+  if(id){updateById(herramientas,id,data);toast('Herramienta actualizada');saveAll();}
+  else{data.id=newId();herramientas.push(data);addAct('p','&#129504;','Herramienta IA añadida: '+nombre);toast('Herramienta anadida');saveAll();}
   closeModal('herramienta');renderNotebook();
 }
 
@@ -1728,11 +1784,17 @@ function renderFormaciones() {
     } else {
       asistHtml='<span style="color:var(--txm);font-size:12px">'+(f.asistTxt||'Sin asistentes asignados')+'</span>';
     }
+    // Auto-state badge for formación
+    var estAuto = calcEstadoAuto({fecha:f.fecha, dias:parseInt(f.dias||1), estado:'aprobada'});
+    var estLabels={solicitada:'Por confirmar',aprobada:'Programada',encurso:'En curso',cerrada:'Cerrada'};
+    var estCols={solicitada:'#7d8fa8',aprobada:'#5b8dee',encurso:'#f7c948',cerrada:'#00d4aa'};
+    var estBadge='<span style="background:'+estCols[estAuto]+';color:#0d1117;padding:2px 8px;border-radius:10px;font-size:9px;font-weight:700;margin-left:6px">'+(estLabels[estAuto]||'')+'</span>';
+
     html+='<div style="background:var(--sur);border:1px solid var(--brd);border-radius:11px;overflow:hidden;">';
     html+='<div class="evitem" onclick="toggleFormacion(\''+f.id+'\')" style="padding:13px 16px;display:flex;align-items:center;gap:12px;border-radius:0">';
     html+='<div class="evdate"><div class="evday" style="color:'+acc+'">'+dia+'</div><div class="evmon">'+esc(mes)+'</div></div>';
     html+='<div class="evbar '+col+'"></div>';
-    html+='<div class="evinfo"><div class="evtitle">'+esc(f.titulo)+' <span class="evchev" id="chev-'+f.id+'">&#9660;</span></div><div class="evmeta">'+esc(f.lugar)+' &middot; '+esc(f.hora)+'</div></div>';
+    html+='<div class="evinfo"><div class="evtitle">'+esc(f.titulo)+' '+estBadge+' <span class="evchev" id="chev-'+f.id+'">&#9660;</span></div><div class="evmeta">'+esc(f.lugar)+' &middot; '+esc(f.hora)+(f.dias>1?' &middot; '+f.dias+' d&#237;as':'')+'</div></div>';
     html+='<span class="evbadge '+bdg+'">'+lbl+'</span>';
     html+='<div class="abts" style="margin-left:8px" onclick="event.stopPropagation()">';
     html+='<button class="btn btn-sm btn-e" onclick="openModal(\'formacion\',\''+f.id+'\')">Editar</button>';
@@ -1740,9 +1802,25 @@ function renderFormaciones() {
     html+='</div></div>';
     html+='<div class="evdrop" id="drop-'+f.id+'" style="padding:0 16px 14px 16px">';
     html+='<div class="evdrop-grid">';
-    html+='<div class="evdrop-item"><div class="evdrop-lbl">Fecha</div><div class="evdrop-val">'+fmtDate(f.fecha)+'</div></div>';
-    html+='<div class="evdrop-item"><div class="evdrop-lbl">Horario</div><div class="evdrop-val">'+esc(f.hora)+'</div></div>';
-    html+='<div class="evdrop-item"><div class="evdrop-lbl">Lugar</div><div class="evdrop-val">'+esc(f.lugar)+'</div></div>';
+    // Si tiene varios días, muestra el detalle por día
+    if(f.dias && f.dias>1 && f.fechas && f.fechas.length>1){
+      var detHtml='<div style="grid-column:1/-1">';
+      detHtml+='<div class="evdrop-lbl" style="margin-bottom:6px">Detalle por d&#237;a</div>';
+      for(var dd=0; dd<f.fechas.length; dd++){
+        var ff=f.fechas[dd]||f.fecha, hh=(f.horarios&&f.horarios[dd])||f.hora, ll=(f.lugares&&f.lugares[dd])||f.lugar;
+        detHtml+='<div style="display:grid;grid-template-columns:80px 1fr 1fr;gap:8px;padding:6px 8px;background:var(--bg);border-radius:6px;margin-bottom:4px;font-size:11px">';
+        detHtml+='<div><strong>D&#237;a '+(dd+1)+'</strong></div>';
+        detHtml+='<div>&#128197; '+fmtDate(ff)+' &middot; '+esc(hh)+'</div>';
+        detHtml+='<div>&#128205; '+esc(ll)+'</div>';
+        detHtml+='</div>';
+      }
+      detHtml+='</div>';
+      html+=detHtml;
+    } else {
+      html+='<div class="evdrop-item"><div class="evdrop-lbl">Fecha</div><div class="evdrop-val">'+fmtDate(f.fecha)+'</div></div>';
+      html+='<div class="evdrop-item"><div class="evdrop-lbl">Horario</div><div class="evdrop-val">'+esc(f.hora)+'</div></div>';
+      html+='<div class="evdrop-item"><div class="evdrop-lbl">Lugar</div><div class="evdrop-val">'+esc(f.lugar)+'</div></div>';
+    }
     html+='<div class="evdrop-item"><div class="evdrop-lbl">Tipo</div><div class="evdrop-val">'+tipoFull+'</div></div>';
     html+='<div class="evdrop-item" style="grid-column:1/-1"><div class="evdrop-lbl">Asistentes por encargado</div><div class="evdrop-val">'+asistHtml+'</div></div>';
     html+='</div></div>';
@@ -1771,8 +1849,17 @@ function renderCalendario() {
   var today=new Date();
   var formDays={};
   for(var i=0;i<formaciones.length;i++){
-    var dt=new Date(formaciones[i].fecha+'T12:00:00');
+    var f=formaciones[i];
+    var dt=new Date(f.fecha+'T12:00:00');
     if(dt.getFullYear()===calY&&dt.getMonth()===calM) formDays[dt.getDate()]=true;
+    // Multi-día: marca también los siguientes días
+    if(f.dias && f.dias>1){
+      for(var dd=1; dd<parseInt(f.dias); dd++){
+        var dtN=new Date(f.fecha+'T12:00:00');
+        dtN.setDate(dtN.getDate()+dd);
+        if(dtN.getFullYear()===calY&&dtN.getMonth()===calM) formDays[dtN.getDate()]=true;
+      }
+    }
   }
   for(var i=1;i<=total;i++){
     var isToday=(today.getDate()===i&&today.getMonth()===calM&&today.getFullYear()===calY);
@@ -1898,27 +1985,40 @@ function renderIncorporaciones() {
   if(cnt) cnt.textContent=nuevos.length+' incorporacion'+(nuevos.length!==1?'es':'')+' en los ultimos 60 dias';
   if(nb) nb.textContent=nuevos.length;
   var c=document.getElementById('inc-list');
-  if(!c) return;
-  if(!nuevos.length){c.innerHTML='<div style="text-align:center;padding:28px;color:var(--txm);background:var(--sur);border:1px solid var(--brd);border-radius:13px">No hay incorporaciones recientes.</div>';return;}
-  var stepIcons=['&#128075;','&#128218;','&#127973;','&#129686;','&#9997;'];
-  var html='';
-  for(var i=0;i<nuevos.length;i++){
-    var t=nuevos[i];
-    var ac=avCol(t.nombre);
-    var prog=t.form==='ok'&&t.med==='apto'?4:t.form==='ok'||t.med==='apto'?2:1;
-    var stepsHtml='';
-    for(var j=0;j<stepIcons.length;j++){
-      var sc2=j<prog?'d':j===prog?'p':'t';
-      stepsHtml+='<div class="step '+sc2+'">'+(j<prog?'&#10003;':stepIcons[j])+'</div>';
+  if(c){
+    if(!nuevos.length){
+      c.innerHTML='<div style="text-align:center;padding:28px;color:var(--txm);background:var(--sur);border:1px solid var(--brd);border-radius:13px">No hay incorporaciones recientes.</div>';
+    } else {
+      var html='';
+      for(var i=0;i<nuevos.length;i++){
+        var t=nuevos[i];
+        var ac=avCol(t.nombre);
+        // 3 iconos: Formación PRL, Aptitud médica, EPIs — clicables al editor
+        var fOk = t.form==='ok';
+        var mOk = t.med==='apto';
+        var eOk = t.epis && t.epis!=='Pendientes' && t.epis!=='-' && t.epis.trim()!=='';
+        var stepsHtml='';
+        // Formación PRL
+        var fc = fOk?'d':(t.form==='vencida'?'t':'p');
+        stepsHtml+='<div class="step '+fc+'" onclick="event.stopPropagation();openModal(\'trabajador\',\''+t.id+'\',\'w-form\')" style="cursor:pointer" title="Formaci&#243;n PRL">'+(fOk?'&#10003;':'&#128218;')+'</div>';
+        // Aptitud médica
+        var mc = mOk?'d':(t.med==='no-apto'?'t':'p');
+        stepsHtml+='<div class="step '+mc+'" onclick="event.stopPropagation();openModal(\'trabajador\',\''+t.id+'\',\'w-med\')" style="cursor:pointer" title="Aptitud m&#233;dica">'+(mOk?'&#10003;':'&#127973;')+'</div>';
+        // EPIs
+        var ec = eOk?'d':'p';
+        stepsHtml+='<div class="step '+ec+'" onclick="event.stopPropagation();openModal(\'trabajador\',\''+t.id+'\',\'w-epis\')" style="cursor:pointer" title="EPIs">'+(eOk?'&#10003;':'&#129686;')+'</div>';
+        html+='<div class="inccard">';
+        html+='<div class="incav" style="background:'+ac[0]+';color:'+ac[1]+'">'+esc(initials(t.nombre))+'</div>';
+        html+='<div class="incinfo"><div class="incname">'+esc(t.nombre)+'</div><div class="incrole">'+esc(t.puesto)+(t.dept?' &middot; '+esc(t.dept):'')+' &middot; Inc: '+fmtDate(t.fecha)+'</div></div>';
+        html+='<div class="steps">'+stepsHtml+'</div>';
+        html+='<div class="abts" style="margin-left:10px"><button class="btn btn-sm btn-e" onclick="openModal(\'trabajador\',\''+t.id+'\')">Editar</button><button class="btn btn-sm btn-d" onclick="delTrabajador(\''+t.id+'\')">Borrar</button></div>';
+        html+='</div>';
+      }
+      c.innerHTML=html;
     }
-    html+='<div class="inccard">';
-    html+='<div class="incav" style="background:'+ac[0]+';color:'+ac[1]+'">'+esc(initials(t.nombre))+'</div>';
-    html+='<div class="incinfo"><div class="incname">'+esc(t.nombre)+'</div><div class="incrole">'+esc(t.puesto)+' &middot; '+esc(t.dept)+' &middot; Inc: '+fmtDate(t.fecha)+'</div></div>';
-    html+='<div class="steps">'+stepsHtml+'</div>';
-    html+='<div class="abts" style="margin-left:10px"><button class="btn btn-sm btn-e" onclick="openModal(\'trabajador\',\''+t.id+'\')">Editar</button><button class="btn btn-sm btn-d" onclick="delTrabajador(\''+t.id+'\')">Borrar</button></div>';
-    html+='</div>';
   }
-  c.innerHTML=html;
+  // Render protocolo de acogida (editable)
+  renderProtocolo();
 }
 
 // ── RENDER DASHBOARD ──────────────────────────────────────────
@@ -1940,8 +2040,14 @@ function renderDashboard() {
   if(elC) elC.textContent=proxForm;
 
   var depts={};
+  var sinEnc={total:0, lista:[]};
   for(var i=0;i<trabajadores.length;i++){
     var dep=trabajadores[i].dept;
+    if(!dep || dep.trim()===''){
+      sinEnc.total++;
+      sinEnc.lista.push(trabajadores[i]);
+      continue;
+    }
     if(!depts[dep]) depts[dep]={total:0,ok:0};
     depts[dep].total++;
     if(estadoT(trabajadores[i]).cls==='ok') depts[dep].ok++;
@@ -1953,6 +2059,10 @@ function renderDashboard() {
       var p=Math.round(depts[dep].ok/depts[dep].total*100);
       var bc=p>=90?'#00d4aa':p>=60?'#5b8dee':p>=40?'#f7c948':'#f85149';
       html+='<div class="pbar-wrap"><div class="pbar-hdr"><span>'+esc(dep)+'</span><span style="color:var(--txm);font-size:11px">'+p+'%</span></div><div class="pbar"><div class="pbar-fill" style="width:'+p+'%;background:'+bc+'"></div></div></div>';
+    }
+    // Trabajadores sin encargado → mostrar como "Responsables" sin %
+    if(sinEnc.total>0){
+      html+='<div class="pbar-wrap"><div class="pbar-hdr"><span>Responsables</span><span style="color:var(--txm);font-size:11px">'+sinEnc.total+' trab.</span></div><div class="pbar"><div class="pbar-fill" style="width:100%;background:#7d8fa8"></div></div></div>';
     }
     dc.innerHTML=html||'<div style="text-align:center;padding:16px;color:var(--txm);font-size:11px">Anade trabajadores para ver estadisticas.</div>';
   }
@@ -1988,26 +2098,31 @@ function openModalSolicitud(id) {
   hideErr('sol-err');
   document.getElementById('msol-title').textContent=editing?'Editar solicitud':'Nueva solicitud de formacion';
   document.getElementById('sol-savebtn').textContent=editing?'Actualizar':'Guardar';
-  // Populate workers
-  var sel=document.getElementById('sol-trabs');
-  sel.innerHTML='';
-  for(var i=0;i<trabajadores.length;i++){
-    var op=document.createElement('option');
-    op.value=trabajadores[i].id;
-    op.textContent=trabajadores[i].nombre+' ('+trabajadores[i].puesto+')';
-    sel.appendChild(op);
+  // Populate workers checkbox list
+  var selectedIds=[];
+  if(editing){ var ss=findById(solicitudes,id); if(ss) selectedIds=ss.trabIds||[]; }
+  var solC=document.getElementById('sol-trabs-list');
+  if(solC){
+    var shtml='';
+    if(!trabajadores.length){
+      shtml='<div style="color:var(--txm);font-size:11px;padding:6px">No hay trabajadores registrados.</div>';
+    } else {
+      for(var i=0;i<trabajadores.length;i++){
+        var tw=trabajadores[i];
+        var checked=selectedIds.indexOf(tw.id)>=0?'checked':'';
+        shtml+='<label style="display:flex;align-items:center;gap:8px;padding:5px 6px;cursor:pointer;border-radius:5px;font-size:12px" onmouseover="this.style.background=\'var(--sur)\'" onmouseout="this.style.background=\'\'"><input type="checkbox" class="sol-trabs-cb" value="'+tw.id+'" '+checked+' style="width:15px;height:15px;cursor:pointer"><span>'+esc(tw.nombre)+' <span style="color:var(--txm);font-size:10px">('+esc(tw.puesto)+')</span></span></label>';
+      }
+    }
+    solC.innerHTML=shtml;
   }
   if(editing){
     var s=findById(solicitudes,id);
     if(s){
       sv('sol-titulo',s.titulo);sv('sol-fecha',s.fecha);sv('sol-estado',s.estado);sv('sol-obs',s.obs||'');
       sv('sol-dias',s.dias||'1');sv('sol-lugar',s.lugar||'');sv('sol-hora',s.hora||'');sv('sol-tipo',s.tipo||'obligatorio');
-      var ids=s.trabIds||[];
-      for(var i=0;i<sel.options.length;i++) sel.options[i].selected=(ids.indexOf(sel.options[i].value)>=0);
     }
   } else {
     clr(['sol-titulo','sol-fecha','sol-obs','sol-lugar','sol-hora']);sv('sol-estado','solicitada');sv('sol-dias','1');sv('sol-tipo','obligatorio');
-    for(var i=0;i<sel.options.length;i++) sel.options[i].selected=false;
   }
   document.getElementById('m-solicitud').classList.add('open');
 }
@@ -2015,9 +2130,9 @@ function openModalSolicitud(id) {
 function saveSolicitud() {
   var titulo=gv('sol-titulo').trim();
   if(!titulo){showErr('sol-err');return;}
-  var sel=document.getElementById('sol-trabs');
   var ids=[];
-  if(sel) for(var i=0;i<sel.options.length;i++) if(sel.options[i].selected) ids.push(sel.options[i].value);
+  var cbs=document.querySelectorAll('.sol-trabs-cb');
+  for(var i=0;i<cbs.length;i++) if(cbs[i].checked) ids.push(cbs[i].value);
   var estadoNuevo=gv('sol-estado');
   var data={titulo:titulo,fecha:gv('sol-fecha'),dias:gv('sol-dias')||'1',lugar:gv('sol-lugar')||'',hora:gv('sol-hora')||'',tipo:gv('sol-tipo')||'obligatorio',estado:estadoNuevo,obs:gv('sol-obs'),trabIds:ids};
   var id=editId['solicitud'];
@@ -2031,13 +2146,18 @@ function saveSolicitud() {
     data.id=newId();
     solicitudes.push(data);
     anteriorEstado='';
+    addAct('p','&#128203;','Solicitud de formación: '+titulo);
     toast('Solicitud registrada');
   }
   // Si pasa a APROBADA → añadir al calendario automáticamente
   if(estadoNuevo==='aprobada'&&anteriorEstado!=='aprobada'){
     var asistIds=ids.slice();
-    formaciones.push({id:newId(),titulo:titulo,fecha:data.fecha||new Date().toISOString().slice(0,10),hora:'Por confirmar',lugar:'Por confirmar',tipo:'obligatorio',asistIds:asistIds,asistTxt:''});
+    var fId=newId();
+    formaciones.push({id:fId,solId:data.id,titulo:titulo,fecha:data.fecha||new Date().toISOString().slice(0,10),hora:gv('sol-hora')||'Por confirmar',lugar:gv('sol-lugar')||'Por confirmar',tipo:gv('sol-tipo')||'obligatorio',dias:parseInt(gv('sol-dias')||'1'),asistIds:asistIds,asistTxt:''});
     formaciones.sort(function(a,b){return a.fecha>b.fecha?1:-1;});
+    // Guarda también la referencia en la solicitud
+    var sup=findById(solicitudes,data.id);
+    if(sup) sup.formId=fId;
     toast('Formacion anadida al Calendario automaticamente');
     addAct('g','&#128197;','Aprobada y agendada: '+titulo);
   }
@@ -2049,10 +2169,14 @@ function saveSolicitud() {
 function delSolicitud(id){
   var s=findById(solicitudes,id);
   showConfirm('Eliminar la solicitud "'+(s?s.titulo:'esta solicitud')+'"?',function(){
+    // Vínculo bidireccional: si tiene formacion vinculada, eliminarla también
+    if(s && s.formId){
+      formaciones=formaciones.filter(function(f){ return f.id!==s.formId; });
+    }
     solicitudes=removeById(solicitudes,id);
     toast('Solicitud eliminada','#f85149');
-    guardarAhora();
-    renderSolicitudes();
+    saveAll();
+    renderAll();
   });
 }
 
@@ -2065,6 +2189,7 @@ var SOL_COLS={
 var SOL_LABELS={solicitada:'Solicitada',aprobada:'Aprobada',encurso:'En Curso',cerrada:'Cerrada'};
 
 function renderSolicitudes() {
+  applyEstadosAuto(); // calcula estados automáticos según fecha
   var cols=['solicitada','aprobada','encurso','cerrada'];
   var counts={solicitada:0,aprobada:0,encurso:0,cerrada:0};
   for(var i=0;i<solicitudes.length;i++) if(counts[solicitudes[i].estado]!==undefined) counts[solicitudes[i].estado]++;
@@ -2088,16 +2213,19 @@ function renderSolicitudes() {
         }
         html+='<div style="background:'+st.bg+';border:1px solid '+st.brd+';border-radius:10px;padding:12px">';
         html+='<div style="font-weight:600;font-size:13px;color:'+st.col+';margin-bottom:5px">'+esc(s.titulo)+'</div>';
-        if(s.fecha) html+='<div style="font-size:10px;color:var(--txm);margin-bottom:3px">&#128197; '+fmtDate(s.fecha)+'</div>';
+        if(s.fecha) html+='<div style="font-size:10px;color:var(--txm);margin-bottom:3px">&#128197; '+fmtDate(s.fecha)+(s.dias>1?' &middot; '+s.dias+' d&#237;as':'')+'</div>';
         if(trabNames) html+='<div style="font-size:10px;color:var(--txm);margin-bottom:6px">&#128101; '+esc(trabNames)+'</div>';
         if(s.obs) html+='<div style="font-size:10px;color:var(--txm);margin-bottom:6px;font-style:italic">'+esc(s.obs)+'</div>';
-        // Estado selector inline
+        // Estado selector inline — solo solicitada/aprobada manuales, encurso/cerrada automáticos
         html+='<div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:6px">';
         var allStates=['solicitada','aprobada','encurso','cerrada'];
         for(var k=0;k<allStates.length;k++){
           var st2=allStates[k];
           var active=s.estado===st2;
-          html+='<span onclick="changeSolEstado(\''+s.id+'\',\''+st2+'\')" style="cursor:pointer;padding:2px 8px;border-radius:12px;font-size:9px;font-weight:700;'+(active?'background:'+SOL_COLS[st2].col+';color:var(--bg)':'background:var(--sur);color:var(--txm);border:1px solid var(--brd)')+'">'+(SOL_LABELS[st2]||st2)+'</span>';
+          var clickable = (st2==='solicitada' || st2==='aprobada');
+          var clickHandler = clickable ? 'onclick="changeSolEstado(\''+s.id+'\',\''+st2+'\')"' : 'title="Estado automático según fecha"';
+          var cursorStyle = clickable ? 'cursor:pointer' : 'cursor:not-allowed;opacity:'+(active?'1':'.4');
+          html+='<span '+clickHandler+' style="'+cursorStyle+';padding:2px 8px;border-radius:12px;font-size:9px;font-weight:700;'+(active?'background:'+SOL_COLS[st2].col+';color:var(--bg)':'background:var(--sur);color:var(--txm);border:1px solid var(--brd)')+'">'+(SOL_LABELS[st2]||st2)+(clickable?'':' &#128274;')+'</span>';
         }
         html+='</div>';
         html+='<div style="display:flex;gap:5px">';
@@ -2115,15 +2243,22 @@ function renderSolicitudes() {
 }
 
 function changeSolEstado(id, nuevoEstado) {
+  // Bloqueo: encurso y cerrada se calculan automáticamente, no manualmente
+  if(nuevoEstado==='encurso' || nuevoEstado==='cerrada'){
+    toast('Estado automático según fecha — no se cambia manualmente','#f7c948');
+    return;
+  }
   var s=findById(solicitudes,id);
   if(!s) return;
   var anteriorEstado=s.estado;
   s.estado=nuevoEstado;
-  // Si pasa a APROBADA → auto-add al calendario
+  // Si pasa a APROBADA → auto-add al calendario con vínculo bidireccional
   if(nuevoEstado==='aprobada'&&anteriorEstado!=='aprobada'){
     var asistIds=(s.trabIds||[]).slice();
-    formaciones.push({id:newId(),titulo:s.titulo,fecha:s.fecha||new Date().toISOString().slice(0,10),hora:'Por confirmar',lugar:'Por confirmar',tipo:'obligatorio',asistIds:asistIds,asistTxt:''});
+    var fId=newId();
+    formaciones.push({id:fId,solId:s.id,titulo:s.titulo,fecha:s.fecha||new Date().toISOString().slice(0,10),hora:s.hora||'Por confirmar',lugar:s.lugar||'Por confirmar',tipo:s.tipo||'obligatorio',dias:parseInt(s.dias||'1'),asistIds:asistIds,asistTxt:''});
     formaciones.sort(function(a,b){return a.fecha>b.fecha?1:-1;});
+    s.formId=fId;
     toast('Formacion anadida al Calendario: '+s.titulo);
     addAct('g','&#128197;','Aprobada y agendada: '+s.titulo);
   }
@@ -2134,23 +2269,121 @@ function changeSolEstado(id, nuevoEstado) {
 }
 
 // ── RENDER ALL ────────────────────────────────────────────────
-// ── DÍAS DE FORMACIÓN — actualiza campos por día ──────────────
+// ── PROTOCOLO ACOGIDA (editable) ──────────────────────────────
+var protocolo = [
+  {id:'pr001',titulo:'TPC',desc:'Formaci&#243;n inicial del sector',url:'https://docs.google.com/spreadsheets/d/1EJATKPgvFOgpysdaL0UE12nJ8zXzJOoHmY97EncA5YY/edit?usp=drivesdk',icon:'&#127891;'},
+  {id:'pr002',titulo:'Reconocimiento M&#233;dico',desc:'Reconocimiento m&#233;dico inicial de aptitud para el puesto',url:'https://workspace.vitaly.es/login',icon:'&#127973;'},
+  {id:'pr003',titulo:'Formaci&#243;n empresa y entrega EPIs',desc:'Recib&#237; informaci&#243;n, compromisos PRL y EPIs',url:'',icon:'&#129686;'}
+];
+
+function openModalProtocolo(id){
+  editId['protocolo']=id||null;
+  var editing=!!id;
+  hideErr('pr-err');
+  document.getElementById('mpr-title').textContent=editing?'Editar elemento':'Nuevo elemento';
+  document.getElementById('pr-savebtn').textContent=editing?'Actualizar':'Guardar';
+  if(editing){
+    var p=findById(protocolo,id);
+    if(p){ sv('pr-titulo',p.titulo); sv('pr-desc',p.desc); sv('pr-url',p.url||''); sv('pr-icon',p.icon||'&#128203;'); }
+  } else { clr(['pr-titulo','pr-desc','pr-url']); sv('pr-icon','&#128203;'); }
+  document.getElementById('m-protocolo').classList.add('open');
+}
+
+function saveProtocolo(){
+  var titulo=gv('pr-titulo').trim();
+  if(!titulo){ showErr('pr-err'); return; }
+  var data={titulo:titulo, desc:gv('pr-desc'), url:gv('pr-url').trim(), icon:gv('pr-icon')||'&#128203;'};
+  var id=editId['protocolo'];
+  if(id){ updateById(protocolo,id,data); toast('Elemento actualizado'); saveAll(); }
+  else { data.id=newId(); protocolo.push(data); addAct('b','&#128203;','Protocolo añadido: '+titulo); toast('Elemento añadido'); saveAll(); }
+  closeModal('protocolo');
+  renderProtocolo();
+}
+
+function delProtocolo(id){
+  var p=findById(protocolo,id);
+  showConfirm('Eliminar "'+(p?p.titulo:'este elemento')+'"?',function(){
+    protocolo=removeById(protocolo,id);
+    toast('Elemento eliminado','#f85149');
+    saveAll();
+    renderProtocolo();
+  });
+}
+
+function renderProtocolo(){
+  var c=document.getElementById('protocolo-list');
+  if(!c) return;
+  var html='';
+  for(var i=0;i<protocolo.length;i++){
+    var p=protocolo[i];
+    var clickAttr = p.url ? 'onclick="window.open(\''+esc(p.url)+'\',\'_blank\')" style="cursor:pointer"' : 'style="cursor:default"';
+    html+='<div '+clickAttr+' style="display:flex;align-items:center;gap:12px;padding:14px;background:var(--sur2);border-radius:10px;border:1px solid var(--brd);'+(p.url?'cursor:pointer;transition:border-color .15s':'')+'" onmouseover="if(this.dataset.has)this.style.borderColor=\'var(--acc3)\'" onmouseout="this.style.borderColor=\'var(--brd)\'" data-has="'+(p.url?'1':'')+'">';
+    html+='<span style="font-size:22px">'+p.icon+'</span>';
+    html+='<div style="flex:1"><div style="font-weight:600;font-size:14px">'+p.titulo+'</div><div style="font-size:11px;color:var(--txm);margin-top:2px">'+esc(p.desc)+'</div></div>';
+    html+='<button class="btn btn-sm btn-e" onclick="event.stopPropagation();openModalProtocolo(\''+p.id+'\')">Editar</button>';
+    html+='<button class="btn btn-sm btn-d" onclick="event.stopPropagation();delProtocolo(\''+p.id+'\')">Borrar</button>';
+    html+='</div>';
+  }
+  // Botón añadir
+  html+='<button class="btn btn-p btn-sm" onclick="openModalProtocolo()" style="align-self:flex-start;margin-top:4px">+ A&#241;adir elemento</button>';
+  c.innerHTML=html;
+}
+
+
+// ── ESTADO AUTOMÁTICO de formaciones/solicitudes según fecha ──────
+// Compara fecha con hoy para determinar si está "encurso" o "cerrada"
+function calcEstadoAuto(item){
+  if(!item || !item.fecha) return item.estado || 'solicitada';
+  if(item.estado==='solicitada' || item.estado==='aprobada') return item.estado;
+  var hoy = new Date(); hoy.setHours(0,0,0,0);
+  var dias = parseInt(item.dias || 1);
+  var fInicio = new Date(item.fecha+'T00:00:00');
+  var fFin = new Date(fInicio); fFin.setDate(fFin.getDate() + dias - 1);
+  if(hoy < fInicio) return item.estado || 'aprobada';
+  if(hoy >= fInicio && hoy <= fFin) return 'encurso';
+  if(hoy > fFin) return 'cerrada';
+  return item.estado;
+}
+
+function applyEstadosAuto(){
+  var changed=false;
+  for(var i=0;i<solicitudes.length;i++){
+    var newEst = calcEstadoAuto(solicitudes[i]);
+    if(newEst !== solicitudes[i].estado && (newEst==='encurso' || newEst==='cerrada')){
+      solicitudes[i].estado = newEst;
+      changed = true;
+    }
+  }
+  if(changed) saveAll();
+}
+
 function updateFechasFormacion(){
   var dias=parseInt(gv('f-dias')||'1');
   var fechaBase=gv('f-fecha');
+  var horaBase=gv('f-hora')||'';
+  var lugarBase=gv('f-lugar')||'';
   var wrap=document.getElementById('f-lugares-wrap');
   var list=document.getElementById('f-lugares-list');
   if(!wrap||!list) return;
   if(dias<=1||!fechaBase){ wrap.style.display='none'; return; }
   wrap.style.display='block';
+  // Recupera valores actuales si existen (al editar)
+  var f = editId['formacion'] ? findById(formaciones, editId['formacion']) : null;
+  var savedF = (f && f.fechas) || [];
+  var savedL = (f && f.lugares) || [];
+  var savedH = (f && f.horarios) || [];
   var html='';
   for(var i=0;i<dias;i++){
-    var d=new Date(fechaBase+'T12:00:00');
-    d.setDate(d.getDate()+i);
-    var lbl=d.toLocaleDateString('es-ES',{weekday:'short',day:'numeric',month:'short'});
-    html+='<div style="display:flex;gap:8px;align-items:center;margin-bottom:6px">';
-    html+='<span style="font-size:11px;color:var(--txm);min-width:80px">'+lbl+'</span>';
-    html+='<input class="finput" id="f-lugar-'+i+'" type="text" placeholder="Lugar d&#237;a '+(i+1)+'" style="margin:0">';
+    var dDef=new Date(fechaBase+'T12:00:00');
+    dDef.setDate(dDef.getDate()+i);
+    var dDefStr=dDef.toISOString().slice(0,10);
+    var fVal=savedF[i]||dDefStr;
+    var lVal=savedL[i]||lugarBase;
+    var hVal=savedH[i]||horaBase;
+    html+='<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:8px;padding:8px;background:var(--bg);border-radius:7px;border:1px solid var(--brd)">';
+    html+='<div><label style="font-size:9px;color:var(--txm);text-transform:uppercase">D&#237;a '+(i+1)+' fecha</label><input class="finput" id="f-fecha-'+i+'" type="date" value="'+fVal+'" style="margin-top:2px"></div>';
+    html+='<div><label style="font-size:9px;color:var(--txm);text-transform:uppercase">Horario</label><input class="finput" id="f-hora-'+i+'" type="text" placeholder="09:00-14:00" value="'+esc(hVal)+'" style="margin-top:2px"></div>';
+    html+='<div><label style="font-size:9px;color:var(--txm);text-transform:uppercase">Lugar</label><input class="finput" id="f-lugar-'+i+'" type="text" placeholder="Sala A" value="'+esc(lVal)+'" style="margin-top:2px"></div>';
     html+='</div>';
   }
   list.innerHTML=html;
@@ -2158,17 +2391,27 @@ function updateFechasFormacion(){
 
 // ── CALENDARIO — click en día → scroll a formación ────────────
 function goToFormacionesDia(dia, mes, anio){
-  // Navega a la sección de formaciones y hace scroll a las del día pulsado
   var fecha=anio+'-'+String(mes+1).padStart(2,'0')+'-'+String(dia).padStart(2,'0');
-  var fsDia=formaciones.filter(function(f){ return f.fecha===fecha || (f.fechas&&f.fechas.indexOf(fecha)>=0); });
+  var fsDia=formaciones.filter(function(f){
+    if(f.fecha===fecha) return true;
+    if(f.fechas && f.fechas.indexOf(fecha)>=0) return true;
+    if(f.dias && f.dias>1 && f.fecha){
+      var fIni=new Date(f.fecha+'T00:00:00');
+      var fFin=new Date(fIni); fFin.setDate(fFin.getDate()+parseInt(f.dias)-1);
+      var fCheck=new Date(fecha+'T00:00:00');
+      if(fCheck>=fIni && fCheck<=fFin) return true;
+    }
+    return false;
+  });
   if(!fsDia.length) return;
-  // Abre el desplegable de la primera coincidencia
   var f=fsDia[0];
-  var el=document.getElementById('drop-'+f.id);
-  if(el){
-    el.scrollIntoView({behavior:'smooth',block:'start'});
-    setTimeout(function(){ toggleFormacion(f.id); },300);
-  }
+  setTimeout(function(){
+    var el=document.getElementById('drop-'+f.id);
+    if(el){
+      el.scrollIntoView({behavior:'smooth',block:'center'});
+      setTimeout(function(){ toggleFormacion(f.id); },300);
+    }
+  },100);
 }
 
 // ── ENLACES (Organismos) CRUD ─────────────────────────────────
@@ -2204,7 +2447,7 @@ function saveEnlace(){
   var data={nombre:nombre, url:url, icon:gv('en-icon')||'&#128279;'};
   var id=editId['enlace'];
   if(id){ updateById(enlaces,id,data); toast('Enlace actualizado'); saveAll(); }
-  else { data.id=newId(); enlaces.push(data); toast('Enlace añadido'); saveAll(); }
+  else { data.id=newId(); enlaces.push(data); addAct('p','&#128279;','Enlace añadido: '+nombre); toast('Enlace añadido'); saveAll(); }
   closeModal('enlace');
   renderEnlaces();
 }
@@ -2226,15 +2469,15 @@ function renderEnlaces(){
   var html='';
   for(var i=0;i<enlaces.length;i++){
     var en=enlaces[i];
-    html+='<div style="background:var(--sur);border:1px solid var(--brd);border-radius:11px;padding:14px;display:flex;flex-direction:column;gap:8px">';
+    html+='<div onclick="window.open(\''+esc(en.url)+'\',\'_blank\')" style="background:var(--sur);border:1px solid var(--brd);border-radius:11px;padding:14px;display:flex;flex-direction:column;gap:8px;cursor:pointer;transition:border-color .15s" onmouseover="this.style.borderColor=\'var(--acc3)\'" onmouseout="this.style.borderColor=\'var(--brd)\'">';
     html+='<div style="display:flex;align-items:center;gap:10px">';
     html+='<span style="font-size:22px">'+en.icon+'</span>';
     html+='<div style="flex:1;min-width:0"><div style="font-weight:600;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(en.nombre)+'</div></div>';
     html+='</div>';
-    html+='<div style="display:flex;gap:6px;align-items:center">';
-    html+='<a href="'+esc(en.url)+'" target="_blank" style="flex:1;color:var(--acc3);font-size:11px;text-decoration:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Abrir &#8594;</a>';
-    html+='<button class="btn btn-sm btn-e" onclick="openModalEnlace(\''+en.id+'\')">Editar</button>';
-    html+='<button class="btn btn-sm btn-d" onclick="delEnlace(\''+en.id+'\')">Borrar</button>';
+    html+='<div style="display:flex;gap:6px;align-items:center" onclick="event.stopPropagation()">';
+    html+='<span style="flex:1;color:var(--acc3);font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Abrir &#8594;</span>';
+    html+='<button class="btn btn-sm btn-e" onclick="event.stopPropagation();openModalEnlace(\''+en.id+'\')">Editar</button>';
+    html+='<button class="btn btn-sm btn-d" onclick="event.stopPropagation();delEnlace(\''+en.id+'\')">Borrar</button>';
     html+='</div></div>';
   }
   c.innerHTML=html;
