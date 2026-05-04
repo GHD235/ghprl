@@ -544,7 +544,7 @@ tbody td{padding:11px 16px;font-size:13px;vertical-align:middle;}
 </div>
 
 <div class="moverlay" id="m-formacion" onclick="if(event.target===this)closeModal('formacion')">
-  <div class="modal">
+  <div class="modal" style="max-height:90vh;overflow-y:auto">
     <button class="mclose" onclick="closeModal('formacion')">&#215;</button>
     <div class="mtitle" id="mf-title">Formaci&#243;n</div><div class="msub">Programa una formaci&#243;n en el calendario PRL.</div>
     <div class="fgrid">
@@ -553,7 +553,7 @@ tbody td{padding:11px 16px;font-size:13px;vertical-align:middle;}
       <div><label class="flabel">Fecha inicio *</label><input class="finput" id="f-fecha" type="date" onchange="updateFechasFormacion()"></div>
       <div><label class="flabel">Horario</label><input class="finput" id="f-hora" type="text" placeholder="09:00&#8211;14:00"></div>
       <div><label class="flabel">Tipo</label><select class="finput" id="f-tipo"><option value="obligatorio">Obligatoria</option><option value="voluntaria">Voluntaria</option><option value="recurrente">Anual/Recurrente</option></select></div>
-      <div class="full" id="f-lugares-wrap" style="display:none"><label class="flabel">Detalle por d&#237;a (fecha, horario y lugar)</label><div id="f-lugares-list"></div></div>
+      <div class="full" id="f-lugares-wrap" style="display:none"><label class="flabel">Detalle por d&#237;a (fecha, horario y lugar)</label><div id="f-lugares-list" style="max-height:220px;overflow-y:auto;padding-right:4px"></div></div>
       <div class="full"><label class="flabel">Lugar (general)</label><input class="finput" id="f-lugar" type="text" placeholder="Sala Reuniones A"></div>
       <div class="full"><label class="flabel">Destinatarios (selecciona uno o varios trabajadores)</label><div id="f-asist-list" style="max-height:180px;overflow-y:auto;background:var(--sur2);border:1px solid var(--brd);border-radius:8px;padding:8px"></div><div style="font-size:10px;color:var(--txm);margin-top:3px">Pulsa cada nombre para seleccionar. Vuelve a pulsar para deseleccionar.</div></div>
     </div>
@@ -876,9 +876,20 @@ function applyFirebaseData(data){
   if(data.carpetas      !== undefined){ carpetas=toArr(data.carpetas); }
   if(data.enlaces       !== undefined){ enlaces=toArr(data.enlaces); }
   if(data.protocolo     !== undefined){ protocolo=toArr(data.protocolo); }
+  if(data.actLog && Array.isArray(data.actLog)){ actLog=data.actLog; }
   if(data.formCompletadas !== undefined){
-    if(data.formCompletadas && !data.formCompletadas.__empty) formCompletadas=data.formCompletadas;
-    else formCompletadas={};
+    if(data.formCompletadas && typeof data.formCompletadas==='object' && !data.formCompletadas.__empty){
+      // Filtra entradas vacías de trabajadores (sin formaciones marcadas)
+      var fc={};
+      for(var wid in data.formCompletadas){
+        if(wid==='__empty') continue;
+        var wfc=data.formCompletadas[wid];
+        if(wfc && typeof wfc==='object' && Object.keys(wfc).length>0) fc[wid]=wfc;
+      }
+      formCompletadas=fc;
+    } else {
+      formCompletadas={};
+    }
   }
 }
 
@@ -1302,8 +1313,24 @@ function showConfirm(msg,cb) {
 function closeConfirm() { document.getElementById('confirm-overlay').classList.remove('open'); }
 
 function addAct(col,ic,msg) {
-  actLog.unshift({col:col,ic:ic,msg:msg});
-  if(actLog.length>6) actLog.pop();
+  var now=new Date();
+  var timeStr=now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');
+  actLog.unshift({col:col,ic:ic,msg:msg,time:timeStr,ts:now.getTime()});
+  if(actLog.length>10) actLog.pop();
+  // Guarda actLog en Firebase para que sea visible en todos los dispositivos
+  fetch(FB_URL+'/actLog.json',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(actLog),keepalive:true}).catch(function(){});
+  // Actualiza el widget del dashboard si está visible
+  var ac=document.getElementById('dash-act');
+  if(ac){
+    var html='';
+    for(var i=0;i<actLog.length&&i<6;i++){
+      var a=actLog[i];
+      var tStr=a.time?(' <span style="color:var(--txm);font-size:10px">'+a.time+'</span>'):'';
+      html+='<div class="actitem"><div class="acticon '+a.col+'">'+a.ic+'</div><div><div class="acttext">'+esc(a.msg)+'</div><div class="acttime">Hoy'+tStr+'</div></div></div>';
+    }
+    if(!html) html='<div class="actitem"><div class="acticon g">&#9989;</div><div><div class="acttext">Portal PRL iniciado</div><div class="acttime">Al iniciar</div></div></div>';
+    ac.innerHTML=html;
+  }
 }
 
 // ── NAVIGATION ────────────────────────────────────────────────
@@ -1486,12 +1513,10 @@ function saveTrabajador() {
 function saveFormacion() {
   var titulo=gv('f-titulo').trim(),fecha=gv('f-fecha');
   if(!titulo||!fecha){showErr('f-err');return;}
-  // Read checkboxes
   var ids=[];
   var cbs=document.querySelectorAll('.f-asist-cb');
   for(var i=0;i<cbs.length;i++) if(cbs[i].checked) ids.push(cbs[i].value);
   var dias=parseInt(gv('f-dias')||'1');
-  // Recoge fechas/lugares/horarios por día si hay más de 1
   var lugares=[], fechas=[], horarios=[];
   for(var d=0;d<dias;d++){
     var lEl=document.getElementById('f-lugar-'+d);
@@ -1501,17 +1526,44 @@ function saveFormacion() {
     fechas.push(fEl?fEl.value:fecha);
     horarios.push(hEl?hEl.value:gv('f-hora'));
   }
+  var id=editId['formacion'];
+  // Calcula estado automático según fecha
+  var estadoAuto = calcEstadoAuto({fecha:fecha, dias:dias, estado:'aprobada'});
   var data={
     titulo:titulo, fecha:fecha, dias:dias,
     hora:gv('f-hora')||'-',
     lugar:gv('f-lugar')||'-',
     lugares:lugares, fechas:fechas, horarios:horarios,
     tipo:gv('f-tipo'),
-    asistIds:ids, asistTxt:''
+    asistIds:ids, asistTxt:'',
+    estado: estadoAuto
   };
-  var id=editId['formacion'];
-  if(id){updateById(formaciones,id,data);toast('Formacion actualizada');saveAll();}
-  else{data.id=newId();formaciones.push(data);formaciones.sort(function(a,b){return a.fecha>b.fecha?1:-1;});addAct('g','&#128197;','Formacion programada: '+titulo);toast('Formacion anadida');saveAll();}
+  if(id){
+    // Preserva solId si existía (vínculo con solicitud)
+    var existing=findById(formaciones,id);
+    if(existing && existing.solId) data.solId=existing.solId;
+    updateById(formaciones,id,data);
+    // ── VÍNCULO BIDIRECCIONAL: actualiza solicitud enlazada ──
+    if(data.solId){
+      var sol=findById(solicitudes,data.solId);
+      if(sol){
+        sol.titulo=titulo; sol.fecha=fecha; sol.dias=dias;
+        sol.lugar=gv('f-lugar')||sol.lugar||'';
+        sol.hora=gv('f-hora')||sol.hora||'';
+        sol.trabIds=ids;
+        sol.estado=estadoAuto;
+      }
+    }
+    toast('Formacion actualizada');
+    saveAll();
+  } else {
+    data.id=newId();
+    formaciones.push(data);
+    formaciones.sort(function(a,b){return a.fecha>b.fecha?1:-1;});
+    addAct('g','&#128197;','Formacion programada: '+titulo);
+    toast('Formacion anadida');
+    saveAll();
+  }
   closeModal('formacion');renderAll();
 }
 
@@ -1784,8 +1836,8 @@ function renderFormaciones() {
     } else {
       asistHtml='<span style="color:var(--txm);font-size:12px">'+(f.asistTxt||'Sin asistentes asignados')+'</span>';
     }
-    // Auto-state badge for formación
-    var estAuto = calcEstadoAuto({fecha:f.fecha, dias:parseInt(f.dias||1), estado:'aprobada'});
+    // Auto-state badge — usa el estado real del objeto, nunca hardcoded
+    var estAuto = calcEstadoAuto({fecha:f.fecha, dias:parseInt(f.dias||1), estado:f.estado||'aprobada'});
     var estLabels={solicitada:'Por confirmar',aprobada:'Programada',encurso:'En curso',cerrada:'Cerrada'};
     var estCols={solicitada:'#7d8fa8',aprobada:'#5b8dee',encurso:'#f7c948',cerrada:'#00d4aa'};
     var estBadge='<span style="background:'+estCols[estAuto]+';color:#0d1117;padding:2px 8px;border-radius:10px;font-size:9px;font-weight:700;margin-left:6px">'+(estLabels[estAuto]||'')+'</span>';
@@ -2069,11 +2121,13 @@ function renderDashboard() {
 
   var ac=document.getElementById('dash-act');
   if(ac){
-    var html='<div class="actitem"><div class="acticon g">&#9989;</div><div><div class="acttext">Portal PRL iniciado correctamente</div><div class="acttime">Al iniciar</div></div></div>';
-    for(var i=0;i<actLog.length&&i<5;i++){
+    var html='';
+    for(var i=0;i<actLog.length&&i<6;i++){
       var a=actLog[i];
-      html='<div class="actitem"><div class="acticon '+a.col+'">'+a.ic+'</div><div><div class="acttext">'+esc(a.msg)+'</div><div class="acttime">Hace un momento</div></div></div>'+html;
+      var tStr=a.time?(' <span style="color:var(--txm);font-size:10px">'+a.time+'</span>'):'';
+      html+='<div class="actitem"><div class="acticon '+a.col+'">'+a.ic+'</div><div><div class="acttext">'+esc(a.msg)+'</div><div class="acttime">Hoy'+tStr+'</div></div></div>';
     }
+    if(!html) html='<div class="actitem"><div class="acticon g">&#9989;</div><div><div class="acttext">Portal PRL iniciado correctamente</div><div class="acttime">Al iniciar</div></div></div>';
     ac.innerHTML=html;
   }
 }
@@ -2316,15 +2370,20 @@ function renderProtocolo(){
   var html='';
   for(var i=0;i<protocolo.length;i++){
     var p=protocolo[i];
-    var clickAttr = p.url ? 'onclick="window.open(\''+esc(p.url)+'\',\'_blank\')" style="cursor:pointer"' : 'style="cursor:default"';
-    html+='<div '+clickAttr+' style="display:flex;align-items:center;gap:12px;padding:14px;background:var(--sur2);border-radius:10px;border:1px solid var(--brd);'+(p.url?'cursor:pointer;transition:border-color .15s':'')+'" onmouseover="if(this.dataset.has)this.style.borderColor=\'var(--acc3)\'" onmouseout="this.style.borderColor=\'var(--brd)\'" data-has="'+(p.url?'1':'')+'">';
-    html+='<span style="font-size:22px">'+p.icon+'</span>';
-    html+='<div style="flex:1"><div style="font-weight:600;font-size:14px">'+p.titulo+'</div><div style="font-size:11px;color:var(--txm);margin-top:2px">'+esc(p.desc)+'</div></div>';
-    html+='<button class="btn btn-sm btn-e" onclick="event.stopPropagation();openModalProtocolo(\''+p.id+'\')">Editar</button>';
-    html+='<button class="btn btn-sm btn-d" onclick="event.stopPropagation();delProtocolo(\''+p.id+'\')">Borrar</button>';
+    var hasUrl=!!p.url;
+    html+='<div style="display:flex;align-items:center;gap:14px;padding:14px 16px;background:var(--sur2);border-radius:11px;border:1px solid var(--brd);transition:border-color .15s'+(hasUrl?';cursor:pointer':'')+'"'
+      +(hasUrl?' onclick="window.open(\''+esc(p.url)+'\',\'_blank\')"':'')+' onmouseover="if(this.onclick)this.style.borderColor=\'var(--acc3)\'" onmouseout="this.style.borderColor=\'var(--brd)\'">';
+    html+='<div style="width:44px;height:44px;border-radius:10px;background:rgba(91,141,238,.12);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0">'+p.icon+'</div>';
+    html+='<div style="flex:1;min-width:0">';
+    html+='<div style="font-weight:700;font-size:13px;margin-bottom:2px">'+esc(p.titulo)+'</div>';
+    html+='<div style="font-size:11px;color:var(--txm)">'+esc(p.desc)+'</div>';
+    if(hasUrl) html+='<div style="font-size:10px;color:var(--acc3);margin-top:3px">Abrir &#8594;</div>';
     html+='</div>';
+    html+='<div style="display:flex;gap:5px;flex-shrink:0" onclick="event.stopPropagation()">';
+    html+='<button class="btn btn-sm btn-e" onclick="openModalProtocolo(\''+p.id+'\')">Editar</button>';
+    html+='<button class="btn btn-sm btn-d" onclick="delProtocolo(\''+p.id+'\')">Borrar</button>';
+    html+='</div></div>';
   }
-  // Botón añadir
   html+='<button class="btn btn-p btn-sm" onclick="openModalProtocolo()" style="align-self:flex-start;margin-top:4px">+ A&#241;adir elemento</button>';
   c.innerHTML=html;
 }
@@ -2333,24 +2392,37 @@ function renderProtocolo(){
 // ── ESTADO AUTOMÁTICO de formaciones/solicitudes según fecha ──────
 // Compara fecha con hoy para determinar si está "encurso" o "cerrada"
 function calcEstadoAuto(item){
-  if(!item || !item.fecha) return item.estado || 'solicitada';
-  if(item.estado==='solicitada' || item.estado==='aprobada') return item.estado;
+  if(!item || !item.fecha) return item && item.estado || 'solicitada';
+  // solicitada nunca cambia automáticamente
+  if(item.estado==='solicitada') return 'solicitada';
+  // aprobada, encurso y cerrada se rigen por fecha
   var hoy = new Date(); hoy.setHours(0,0,0,0);
   var dias = parseInt(item.dias || 1);
   var fInicio = new Date(item.fecha+'T00:00:00');
   var fFin = new Date(fInicio); fFin.setDate(fFin.getDate() + dias - 1);
-  if(hoy < fInicio) return item.estado || 'aprobada';
-  if(hoy >= fInicio && hoy <= fFin) return 'encurso';
-  if(hoy > fFin) return 'cerrada';
-  return item.estado;
+  if(hoy < fInicio) return 'aprobada';       // aún no ha llegado → programada
+  if(hoy >= fInicio && hoy <= fFin) return 'encurso';  // hoy está dentro del rango
+  return 'cerrada';                          // ya pasó
 }
 
 function applyEstadosAuto(){
   var changed=false;
+  // Actualiza solicitudes
   for(var i=0;i<solicitudes.length;i++){
+    if(solicitudes[i].estado==='solicitada') continue; // solicitada no cambia
     var newEst = calcEstadoAuto(solicitudes[i]);
-    if(newEst !== solicitudes[i].estado && (newEst==='encurso' || newEst==='cerrada')){
+    if(newEst !== solicitudes[i].estado){
       solicitudes[i].estado = newEst;
+      changed = true;
+    }
+  }
+  // Actualiza formaciones (también tienen estado)
+  for(var j=0;j<formaciones.length;j++){
+    if(!formaciones[j].estado) formaciones[j].estado = 'aprobada';
+    if(formaciones[j].estado==='solicitada') continue;
+    var newEstF = calcEstadoAuto(formaciones[j]);
+    if(newEstF !== formaciones[j].estado){
+      formaciones[j].estado = newEstF;
       changed = true;
     }
   }
