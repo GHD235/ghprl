@@ -427,10 +427,12 @@ tbody td{padding:11px 16px;font-size:13px;vertical-align:middle;}
       <div class="twrap">
         <div class="ttbar">
           <div class="sbox">&#128269; <input type="text" placeholder="Buscar nombre, dpto..." oninput="renderTrabajadores(this.value)"></div>
+          <select class="fbtn" id="fil-encargado" onchange="setFiltroEncargado(this.value)" style="font-size:11px;padding:6px 10px;cursor:pointer">
+            <option value="">&#128100; Encargado</option>
+          </select>
           <button class="fbtn active" onclick="setFiltro('todos',this)">Todos</button>
           <button class="fbtn" onclick="setFiltro('ok',this)">Al d&#237;a</button>
           <button class="fbtn" onclick="setFiltro('pe',this)">Pendientes</button>
-          <button class="fbtn" onclick="setFiltro('ex',this)">Vencidos</button>
           <button class="btn btn-p btn-sm" style="margin-left:auto" onclick="openModal('trabajador')">+ A&#241;adir</button>
         </div>
         <table>
@@ -533,7 +535,7 @@ tbody td{padding:11px 16px;font-size:13px;vertical-align:middle;}
       <div><label class="flabel">Encargado</label><select class="finput" id="w-dept"><option value="">No aplica</option></select></div>
       <div><label class="flabel">Puesto *</label><select class="finput" id="w-puesto"><option value="">Seleccionar...</option><option value="OBRA CIVIL">OBRA CIVIL</option><option value="ELECTRICO">EL&#201;CTRICO</option><option value="OFICINA">OFICINA</option><option value="PRL">PRL</option><option value="ENCARGADO">ENCARGADO</option></select></div>
       <div><label class="flabel">Fecha incorporaci&#243;n</label><input class="finput" id="w-fecha" type="date"></div>
-      <div><label class="flabel">Formaci&#243;n PRL</label><select class="finput" id="w-form"><option value="pendiente">Pendiente</option><option value="ok">Completada</option><option value="vencida">Vencida</option></select></div>
+      <div><label class="flabel">Formaci&#243;n PRL</label><select class="finput" id="w-form"><option value="pendiente">Pendiente</option><option value="ok">Completada</option></select></div>
       <div><label class="flabel">Aptitud m&#233;dica</label><select class="finput" id="w-med"><option value="pendiente">Pendiente</option><option value="apto">Apto/a</option><option value="no-apto">No apto/a</option></select></div>
       <div class="full"><label class="flabel">EPIs asignados</label><input class="finput" id="w-epis" type="text" placeholder="Ej: Casco, guantes, calzado S3"></div>
       <div class="full"><label class="flabel">Capacitaciones</label><div id="cap-selector" style="display:flex;flex-wrap:wrap;gap:7px;padding:10px;background:var(--sur2);border:1px solid var(--brd);border-radius:8px;min-height:44px"></div><div style="font-size:10px;color:var(--txm);margin-top:3px">Pulsa para seleccionar / deseleccionar</div></div>
@@ -639,23 +641,22 @@ tbody td{padding:11px 16px;font-size:13px;vertical-align:middle;}
 </div>
 
 <div class="moverlay" id="m-solicitud" onclick="if(event.target===this)closeModal('solicitud')">
-  <div class="modal" style="max-width:480px">
+  <div class="modal" style="max-width:500px;max-height:90vh;overflow-y:auto">
     <button class="mclose" onclick="closeModal('solicitud')">&#215;</button>
     <div class="mtitle" id="msol-title">Nueva solicitud de formaci&#243;n</div>
     <div class="msub">Registra una formaci&#243;n a solicitar. Al aprobarla pasa al Calendario.</div>
     <div class="fgrid">
       <div class="full"><label class="flabel">Formaci&#243;n *</label><input class="finput" id="sol-titulo" type="text" placeholder="Ej: Curso TET BT, 60h PRL..."></div>
-      <div><label class="flabel">D&#237;as de curso</label><select class="finput" id="sol-dias"><option value="1">1 d&#237;a</option><option value="2">2 d&#237;as</option><option value="3">3 d&#237;as</option><option value="4">4 d&#237;as</option><option value="5">5 d&#237;as</option><option value="6">6 d&#237;as</option><option value="7">7 d&#237;as</option><option value="10">10 d&#237;as</option></select></div>
-      <div><label class="flabel">Fecha prevista</label><input class="finput" id="sol-fecha" type="date"></div>
-      <div><label class="flabel">Lugar previsto</label><input class="finput" id="sol-lugar" type="text" placeholder="Sala Reuniones A"></div>
-      <div><label class="flabel">Horario previsto</label><input class="finput" id="sol-hora" type="text" placeholder="09:00&#8211;14:00"></div>
+      <div><label class="flabel">D&#237;as de curso</label><select class="finput" id="sol-dias" onchange="updateFechasSolicitud()"><option value="1">1 d&#237;a</option><option value="2">2 d&#237;as</option><option value="3">3 d&#237;as</option><option value="4">4 d&#237;as</option><option value="5">5 d&#237;as</option><option value="6">6 d&#237;as</option><option value="7">7 d&#237;as</option><option value="10">10 d&#237;as</option></select></div>
+      <div><label class="flabel">Fecha inicio prevista</label><input class="finput" id="sol-fecha" type="date" onchange="updateFechasSolicitud()"></div>
+      <div class="full" id="sol-lugares-wrap" style="display:none"><label class="flabel">Detalle por d&#237;a (fecha, horario y lugar)</label><div id="sol-lugares-list" style="max-height:200px;overflow-y:auto;padding-right:4px"></div></div>
+      <div><label class="flabel">Lugar d&#237;a 1</label><input class="finput" id="sol-lugar" type="text" placeholder="Sala Reuniones A"></div>
+      <div><label class="flabel">Horario d&#237;a 1</label><input class="finput" id="sol-hora" type="text" placeholder="09:00&#8211;14:00"></div>
       <div><label class="flabel">Tipo</label><select class="finput" id="sol-tipo"><option value="obligatorio">Obligatoria</option><option value="voluntaria">Voluntaria</option><option value="recurrente">Anual/Recurrente</option></select></div>
       <div><label class="flabel">Estado</label>
         <select class="finput" id="sol-estado">
           <option value="solicitada">Solicitada</option>
           <option value="aprobada">Aprobada</option>
-          <option value="encurso">En Curso</option>
-          <option value="cerrada">Cerrada</option>
         </select>
       </div>
       <div class="full"><label class="flabel">Trabajadores afectados</label><div id="sol-trabs-list" style="max-height:180px;overflow-y:auto;background:var(--sur2);border:1px solid var(--brd);border-radius:8px;padding:8px"></div><div style="font-size:10px;color:var(--txm);margin-top:3px">Pulsa cada nombre para seleccionar. Vuelve a pulsar para deseleccionar.</div></div>
@@ -1044,6 +1045,7 @@ function newId(){
 
 var editId = {};
 var filtroActivo = 'todos';
+var filtroEncargado = ''; // filtro por encargado en listado trabajadores
 var actLog = [];
 var calY = new Date().getFullYear();
 var calM = new Date().getMonth();
@@ -1191,8 +1193,22 @@ function renderCapSelector(selected) {
 
 function toggleCap(key) {
   var idx=_capSel.indexOf(key);
+  var isAdding = idx<0;
   if(idx>=0) _capSel.splice(idx,1); else _capSel.push(key);
   renderCapSelector(_capSel);
+  // Aviso EPI al añadir una capacitación
+  if(isAdding) showEpiWarning();
+}
+
+function showEpiWarning(){
+  var w=document.getElementById('epi-warning');
+  if(w){ clearTimeout(w._t); w.style.opacity='1'; w._t=setTimeout(function(){w.style.opacity='0';setTimeout(function(){if(w.parentNode)w.parentNode.removeChild(w);},400);},4000); return; }
+  var div=document.createElement('div');
+  div.id='epi-warning';
+  div.style.cssText='position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:9999;background:rgba(248,81,73,.15);border:2px solid #f85149;border-radius:14px;padding:20px 28px;text-align:center;font-size:14px;font-weight:700;color:#f85149;max-width:320px;pointer-events:none;transition:opacity .4s';
+  div.innerHTML='&#9888;&#65039; Registrar EPI espec&#237;ficos o solicitarlos &#9888;&#65039;';
+  document.body.appendChild(div);
+  div._t=setTimeout(function(){div.style.opacity='0';setTimeout(function(){if(div.parentNode)div.parentNode.removeChild(div);},400);},4000);
 }
 
 function renderCapBadges(caps) {
@@ -1507,6 +1523,16 @@ function saveTrabajador() {
   var id=editId['trabajador'];
   if(id){updateById(trabajadores,id,data);toast('Trabajador actualizado');saveRecord('trabajadores',Object.assign({id:id},data));}
   else{data.id=newId();trabajadores.push(data);addAct('b','&#128100;','Nuevo trabajador: '+nombre);toast('Trabajador anadido');saveRecord('trabajadores',data);}
+  // Si Formación PRL = Completada → marcar automáticamente todas sus formaciones como realizadas
+  var trabId = id || (trabajadores[trabajadores.length-1] && trabajadores[trabajadores.length-1].id);
+  if(data.form==='ok' && trabId){
+    var reqs=getFormReq(data.caps||[], data.puesto);
+    if(reqs.length){
+      if(!formCompletadas[trabId]) formCompletadas[trabId]={};
+      for(var ri=0;ri<reqs.length;ri++) formCompletadas[trabId][reqs[ri]]=true;
+      saveAll(); // guardará formCompletadas actualizado
+    }
+  }
   closeModal('trabajador');renderAll();
 }
 
@@ -1709,10 +1735,34 @@ function setFiltro(f,btn) {
   renderTrabajadores();
 }
 
+function setFiltroEncargado(val){
+  filtroEncargado=val;
+  renderTrabajadores();
+}
+
+// Actualiza el select de encargados con los trabajadores que tienen rol ENCARGADO
+function updateEncargadoSelect(){
+  var sel=document.getElementById('fil-encargado');
+  if(!sel) return;
+  var prev=sel.value;
+  var encargados=trabajadores.filter(function(t){return (t.puesto||'').toLowerCase()==='encargado';});
+  sel.innerHTML='<option value="">&#128100; Encargado</option>';
+  for(var i=0;i<encargados.length;i++){
+    var op=document.createElement('option');
+    op.value=encargados[i].nombre;
+    op.textContent=encargados[i].nombre;
+    if(encargados[i].nombre===prev) op.selected=true;
+    sel.appendChild(op);
+  }
+}
+
 // ── RENDER TRABAJADORES ───────────────────────────────────────
 function renderTrabajadores(busq) {
+  updateEncargadoSelect();
   var datos=busq ? trabajadores.filter(function(t){return (t.nombre+t.dept+t.puesto).toLowerCase().indexOf(busq.toLowerCase())>=0;}) : trabajadores;
   if(filtroActivo!=='todos') datos=datos.filter(function(t){return estadoT(t).cls===filtroActivo;});
+  // Filtro encargado: muestra solo trabajadores a cargo de ese encargado
+  if(filtroEncargado) datos=datos.filter(function(t){return t.dept===filtroEncargado;});
   var tbody=document.getElementById('wtbody');
   if(!tbody) return;
   if(!datos.length){tbody.innerHTML='<tr><td colspan="5" style="text-align:center;padding:28px;color:var(--txm)">No hay trabajadores registrados</td></tr>';return;}
@@ -1752,13 +1802,21 @@ function renderTrabajadores(busq) {
     html+='</tr>';
     html+='<tr class="wdet-row" id="wdet-'+t.id+'" style="display:none;background:rgba(28,34,48,.8)">';
     html+='<td colspan="5" style="padding:14px 16px 16px 52px;border-bottom:1px solid var(--brd)">';
+    // Formaciones requeridas
     html+='<div style="font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--txm);margin-bottom:8px">Formaciones requeridas seg&#250;n capacitaciones</div>';
-    html+='<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:10px">'+reqHtml+'</div>';
-    html+='<div style="display:flex;gap:12px;font-size:9px;color:var(--txm);flex-wrap:wrap">';
+    html+='<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px">'+reqHtml+'</div>';
+    html+='<div style="display:flex;gap:12px;font-size:9px;color:var(--txm);flex-wrap:wrap;margin-bottom:12px">';
     html+='<span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#f85149;margin-right:4px;vertical-align:middle"></span>B&#225;sico (obligatorio para el trabajo)</span>';
     html+='<span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#00d4aa;margin-right:4px;vertical-align:middle"></span>Obligatoria (obligatorio perfil)</span>';
     html+='<span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#5b8dee;margin-right:4px;vertical-align:middle"></span>Voluntaria</span>';
     html+='</div>';
+    // EPIs asignados
+    if(t.epis&&t.epis.trim()){
+      html+='<div style="font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--txm);margin-bottom:6px">&#129686; EPIs asignados</div>';
+      html+='<div style="font-size:12px;background:var(--sur);border:1px solid var(--brd);border-radius:7px;padding:8px 12px;color:var(--txt)">'+esc(t.epis)+'</div>';
+    } else {
+      html+='<div style="font-size:11px;color:var(--txm);font-style:italic">Sin EPIs asignados</div>';
+    }
     html+='</td></tr>';
   }
   tbody.innerHTML=html;
@@ -2174,9 +2232,11 @@ function openModalSolicitud(id) {
     if(s){
       sv('sol-titulo',s.titulo);sv('sol-fecha',s.fecha);sv('sol-estado',s.estado);sv('sol-obs',s.obs||'');
       sv('sol-dias',s.dias||'1');sv('sol-lugar',s.lugar||'');sv('sol-hora',s.hora||'');sv('sol-tipo',s.tipo||'obligatorio');
+      setTimeout(updateFechasSolicitud,50);
     }
   } else {
     clr(['sol-titulo','sol-fecha','sol-obs','sol-lugar','sol-hora']);sv('sol-estado','solicitada');sv('sol-dias','1');sv('sol-tipo','obligatorio');
+    var sWrap=document.getElementById('sol-lugares-wrap'); if(sWrap) sWrap.style.display='none';
   }
   document.getElementById('m-solicitud').classList.add('open');
 }
@@ -2188,7 +2248,18 @@ function saveSolicitud() {
   var cbs=document.querySelectorAll('.sol-trabs-cb');
   for(var i=0;i<cbs.length;i++) if(cbs[i].checked) ids.push(cbs[i].value);
   var estadoNuevo=gv('sol-estado');
-  var data={titulo:titulo,fecha:gv('sol-fecha'),dias:gv('sol-dias')||'1',lugar:gv('sol-lugar')||'',hora:gv('sol-hora')||'',tipo:gv('sol-tipo')||'obligatorio',estado:estadoNuevo,obs:gv('sol-obs'),trabIds:ids};
+  var dias=parseInt(gv('sol-dias')||'1');
+  // Recoge fechas/lugares/horarios por día
+  var lugares=[], fechas=[], horarios=[];
+  for(var d=0;d<dias;d++){
+    var lEl=document.getElementById('sol-lugar-'+d);
+    var fEl=document.getElementById('sol-fecha-'+d);
+    var hEl=document.getElementById('sol-hora-'+d);
+    lugares.push(lEl?lEl.value:gv('sol-lugar'));
+    fechas.push(fEl?fEl.value:gv('sol-fecha'));
+    horarios.push(hEl?hEl.value:gv('sol-hora'));
+  }
+  var data={titulo:titulo,fecha:gv('sol-fecha'),dias:dias,lugar:gv('sol-lugar')||'',hora:gv('sol-hora')||'',lugares:lugares,fechas:fechas,horarios:horarios,tipo:gv('sol-tipo')||'obligatorio',estado:estadoNuevo,obs:gv('sol-obs'),trabIds:ids};
   var id=editId['solicitud'];
   var anteriorEstado='';
   if(id){
@@ -2461,7 +2532,36 @@ function updateFechasFormacion(){
   list.innerHTML=html;
 }
 
-// ── CALENDARIO — click en día → scroll a formación ────────────
+function updateFechasSolicitud(){
+  var dias=parseInt(gv('sol-dias')||'1');
+  var fechaBase=gv('sol-fecha');
+  var horaBase=gv('sol-hora')||'';
+  var lugarBase=gv('sol-lugar')||'';
+  var wrap=document.getElementById('sol-lugares-wrap');
+  var list=document.getElementById('sol-lugares-list');
+  if(!wrap||!list) return;
+  if(dias<=1||!fechaBase){ wrap.style.display='none'; return; }
+  wrap.style.display='block';
+  var s=editId['solicitud'] ? findById(solicitudes, editId['solicitud']) : null;
+  var savedF=(s&&s.fechas)||[];
+  var savedL=(s&&s.lugares)||[];
+  var savedH=(s&&s.horarios)||[];
+  var html='';
+  for(var i=0;i<dias;i++){
+    var dDef=new Date(fechaBase+'T12:00:00');
+    dDef.setDate(dDef.getDate()+i);
+    var dDefStr=dDef.toISOString().slice(0,10);
+    var fVal=savedF[i]||dDefStr;
+    var lVal=savedL[i]||lugarBase;
+    var hVal=savedH[i]||horaBase;
+    html+='<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:8px;padding:8px;background:var(--bg);border-radius:7px;border:1px solid var(--brd)">';
+    html+='<div><label style="font-size:9px;color:var(--txm);text-transform:uppercase">D&#237;a '+(i+1)+' fecha</label><input class="finput" id="sol-fecha-'+i+'" type="date" value="'+fVal+'" style="margin-top:2px"></div>';
+    html+='<div><label style="font-size:9px;color:var(--txm);text-transform:uppercase">Horario</label><input class="finput" id="sol-hora-'+i+'" type="text" placeholder="09:00-14:00" value="'+esc(hVal)+'" style="margin-top:2px"></div>';
+    html+='<div><label style="font-size:9px;color:var(--txm);text-transform:uppercase">Lugar</label><input class="finput" id="sol-lugar-'+i+'" type="text" placeholder="Sala A" value="'+esc(lVal)+'" style="margin-top:2px"></div>';
+    html+='</div>';
+  }
+  list.innerHTML=html;
+}
 function goToFormacionesDia(dia, mes, anio){
   var fecha=anio+'-'+String(mes+1).padStart(2,'0')+'-'+String(dia).padStart(2,'0');
   var fsDia=formaciones.filter(function(f){
