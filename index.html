@@ -295,7 +295,7 @@ tbody td{padding:11px 16px;font-size:13px;vertical-align:middle;}
         <span id="sync-dot-icon" style="width:8px;height:8px;border-radius:50%;background:var(--brd);display:inline-block;transition:background .4s"></span>
         <span id="sync-dot-label">Conectando...</span>
       </div>
-      <button class="btn" style="background:rgba(91,141,238,.15);color:#5b8dee;border:1px solid rgba(91,141,238,.4)" onclick="openModal('trabajador')">&#10133; Nueva Incorporaci&#243;n</button>
+      <button class="btn" style="background:rgba(91,141,238,.15);color:#5b8dee;border:1px solid rgba(91,141,238,.4)" onclick="_fromInc=true;showPage('incorporaciones',null);openModal('trabajador')">&#10133; Nueva Incorporaci&#243;n</button>
       <button class="btn btn-p" onclick="openModal('formacion')">&#128197; Formaci&#243;n</button>
     </div>
   </header>
@@ -433,7 +433,7 @@ tbody td{padding:11px 16px;font-size:13px;vertical-align:middle;}
           <button class="fbtn active" onclick="setFiltro('todos',this)">Todos</button>
           <button class="fbtn" onclick="setFiltro('ok',this)">Al d&#237;a</button>
           <button class="fbtn" onclick="setFiltro('pe',this)">Pendientes</button>
-          <button class="btn btn-p btn-sm" style="margin-left:auto" onclick="openModal('trabajador')">+ A&#241;adir</button>
+          <button class="btn btn-p btn-sm" style="margin-left:auto" onclick="_fromInc=false;openModal('trabajador')">+ A&#241;adir</button>
         </div>
         <table>
           <thead><tr><th>Trabajador</th><th>Encargado</th><th>Capacitaciones</th><th>Estado</th><th style="text-align:center">Acciones</th></tr></thead>
@@ -449,7 +449,7 @@ tbody td{padding:11px 16px;font-size:13px;vertical-align:middle;}
       <div class="alert i">El protocolo de acogida debe completarse en los <strong>primeros 3 d&#237;as</strong> desde la incorporaci&#243;n.</div>
       <div class="rowb">
         <span style="font-size:12px;color:var(--txm)" id="inc-count">&#8212;</span>
-        <button id="btn-nueva-inc" class="btn btn-p btn-sm" onclick="openModal('trabajador')">+ Nueva incorporaci&#243;n</button>
+        <button id="btn-nueva-inc" class="btn btn-p btn-sm" onclick="_fromInc=true;openModal('trabajador')">+ Nueva incorporaci&#243;n</button>
       </div>
       <div class="inclist" id="inc-list"></div>
       <div class="card">
@@ -1046,6 +1046,7 @@ function newId(){
 var editId = {};
 var filtroActivo = 'todos';
 var filtroEncargado = ''; // filtro por encargado en listado trabajadores
+var _fromInc = false;    // true cuando se abre modal trabajador desde Nueva Incorporación
 var actLog = [];
 var calY = new Date().getFullYear();
 var calM = new Date().getMonth();
@@ -1386,6 +1387,8 @@ function openModal(tipo, id, focusField) {
   for(var i=0;i<allM.length;i++) document.getElementById(allM[i]).classList.remove('open');
   editId[tipo]=id||null;
   var editing=!!id;
+  // Si se abre para EDITAR un trabajador existente (no nueva), asegurar que _fromInc no aplica
+  if(tipo==='trabajador' && editing) _fromInc=false;
 
   if(tipo==='trabajador'){
     hideErr('w-err');
@@ -1521,17 +1524,35 @@ function saveTrabajador() {
   if(!nombre||!puesto){showErr('w-err');return;}
   var data={nombre:nombre,dept:dept||'',puesto:puesto,fecha:gv('w-fecha'),form:gv('w-form'),med:gv('w-med'),epis:gv('w-epis')||'Pendientes',caps:_capSel.slice()};
   var id=editId['trabajador'];
-  if(id){updateById(trabajadores,id,data);toast('Trabajador actualizado');saveRecord('trabajadores',Object.assign({id:id},data));}
-  else{data.id=newId();trabajadores.push(data);addAct('b','&#128100;','Nuevo trabajador: '+nombre);toast('Trabajador anadido');saveRecord('trabajadores',data);}
-  // Si Formación PRL = Completada → marcar automáticamente todas sus formaciones como realizadas
-  var trabId = id || (trabajadores[trabajadores.length-1] && trabajadores[trabajadores.length-1].id);
-  if(data.form==='ok' && trabId){
-    var reqs=getFormReq(data.caps||[], data.puesto);
-    if(reqs.length){
-      if(!formCompletadas[trabId]) formCompletadas[trabId]={};
-      for(var ri=0;ri<reqs.length;ri++) formCompletadas[trabId][reqs[ri]]=true;
-      saveAll(); // guardará formCompletadas actualizado
-    }
+  var trabId;
+  if(id){
+    var existing=findById(trabajadores,id);
+    if(existing && existing.fromInc) data.fromInc=true; // preserva flag de origen
+    trabId=id;
+    updateById(trabajadores,id,data);
+    toast('Trabajador actualizado');
+    saveRecord('trabajadores',Object.assign({id:id},data));
+  } else {
+    data.id=newId();
+    if(_fromInc) data.fromInc=true; // marca si viene de Nueva Incorporación
+    _fromInc=false; // limpia siempre
+    trabajadores.push(data);
+    trabId=data.id;
+    addAct('b','&#128100;','Nuevo trabajador: '+nombre);
+    toast('Trabajador anadido');
+    saveRecord('trabajadores',data);
+  }
+  _fromInc=false; // asegura limpieza en cualquier caso
+  // ── Formación PRL completada → marcar TODAS sus formaciones ──
+  var reqs=getFormReq(data.caps||[], data.puesto);
+  if(data.form==='ok' && trabId && reqs.length){
+    if(!formCompletadas[trabId]) formCompletadas[trabId]={};
+    for(var ri=0;ri<reqs.length;ri++) formCompletadas[trabId][reqs[ri]]=true;
+    saveAll();
+  } else if(data.form==='pendiente' && trabId && formCompletadas[trabId]){
+    // Si se cambia de ok a pendiente, limpia el marcado automático
+    delete formCompletadas[trabId];
+    saveAll();
   }
   closeModal('trabajador');renderAll();
 }
@@ -1638,6 +1659,18 @@ function delTrabajador(id) {
   var t=findById(trabajadores,id);
   showConfirm('Eliminar a "'+(t?t.nombre:'este trabajador')+'"?',function(){
     trabajadores=removeById(trabajadores,id);addAct('o','&#128465;','Trabajador eliminado: '+(t?t.nombre:''));toast('Trabajador eliminado','#f85149');deleteRecord('trabajadores',id);renderAll();
+  });
+}
+
+// Quitar de Nueva Incorporación sin borrar el trabajador del listado
+function quitarIncorporacion(id){
+  var t=findById(trabajadores,id);
+  if(!t) return;
+  showConfirm('Quitar "'+esc(t.nombre)+'" de Incorporaciones?\n(El trabajador sigue en el Listado)', function(){
+    delete t.fromInc;
+    saveAll();
+    renderAll();
+    toast('Quitado de incorporaciones');
   });
 }
 function delFormacion(id) {
@@ -2086,13 +2119,16 @@ function renderEpis() {
 // ── RENDER INCORPORACIONES ────────────────────────────────────
 function renderIncorporaciones() {
   var DIAS=60;
+  // Solo muestra trabajadores creados desde "Nueva Incorporación" (fromInc=true)
+  // que además hayan sido registrados en los últimos 60 días
   var nuevos=trabajadores.filter(function(t){
-    if(!t.fecha) return false;
+    if(!t.fromInc) return false;
+    if(!t.fecha) return true; // si no tiene fecha, muestra igualmente
     return (new Date()-new Date(t.fecha+'T12:00:00'))/(86400000)<=DIAS;
   });
   var cnt=document.getElementById('inc-count');
   var nb=document.getElementById('nb-inc');
-  if(cnt) cnt.textContent=nuevos.length+' incorporacion'+(nuevos.length!==1?'es':'')+' en los ultimos 60 dias';
+  if(cnt) cnt.textContent=nuevos.length+' incorporaci\u00f3n'+(nuevos.length!==1?'es':'')+' en los \u00faltimos 60 d\u00edas';
   if(nb) nb.textContent=nuevos.length;
   var c=document.getElementById('inc-list');
   if(c){
@@ -2103,31 +2139,27 @@ function renderIncorporaciones() {
       for(var i=0;i<nuevos.length;i++){
         var t=nuevos[i];
         var ac=avCol(t.nombre);
-        // 3 iconos: Formación PRL, Aptitud médica, EPIs — clicables al editor
         var fOk = t.form==='ok';
         var mOk = t.med==='apto';
         var eOk = t.epis && t.epis!=='Pendientes' && t.epis!=='-' && t.epis.trim()!=='';
         var stepsHtml='';
-        // Formación PRL
-        var fc = fOk?'d':(t.form==='vencida'?'t':'p');
-        stepsHtml+='<div class="step '+fc+'" onclick="event.stopPropagation();openModal(\'trabajador\',\''+t.id+'\',\'w-form\')" style="cursor:pointer" title="Formaci&#243;n PRL">'+(fOk?'&#10003;':'&#128218;')+'</div>';
-        // Aptitud médica
+        var fc = fOk?'d':'p';
+        stepsHtml+='<div class="step '+fc+'" onclick="event.stopPropagation();openModal(\'trabajador\',\''+t.id+'\',\'w-form\')" style="cursor:pointer" title="Formaci\u00f3n PRL">'+(fOk?'&#10003;':'&#128218;')+'</div>';
         var mc = mOk?'d':(t.med==='no-apto'?'t':'p');
-        stepsHtml+='<div class="step '+mc+'" onclick="event.stopPropagation();openModal(\'trabajador\',\''+t.id+'\',\'w-med\')" style="cursor:pointer" title="Aptitud m&#233;dica">'+(mOk?'&#10003;':'&#127973;')+'</div>';
-        // EPIs
+        stepsHtml+='<div class="step '+mc+'" onclick="event.stopPropagation();openModal(\'trabajador\',\''+t.id+'\',\'w-med\')" style="cursor:pointer" title="Aptitud m\u00e9dica">'+(mOk?'&#10003;':'&#127973;')+'</div>';
         var ec = eOk?'d':'p';
         stepsHtml+='<div class="step '+ec+'" onclick="event.stopPropagation();openModal(\'trabajador\',\''+t.id+'\',\'w-epis\')" style="cursor:pointer" title="EPIs">'+(eOk?'&#10003;':'&#129686;')+'</div>';
         html+='<div class="inccard">';
         html+='<div class="incav" style="background:'+ac[0]+';color:'+ac[1]+'">'+esc(initials(t.nombre))+'</div>';
         html+='<div class="incinfo"><div class="incname">'+esc(t.nombre)+'</div><div class="incrole">'+esc(t.puesto)+(t.dept?' &middot; '+esc(t.dept):'')+' &middot; Inc: '+fmtDate(t.fecha)+'</div></div>';
         html+='<div class="steps">'+stepsHtml+'</div>';
-        html+='<div class="abts" style="margin-left:10px"><button class="btn btn-sm btn-e" onclick="openModal(\'trabajador\',\''+t.id+'\')">Editar</button><button class="btn btn-sm btn-d" onclick="delTrabajador(\''+t.id+'\')">Borrar</button></div>';
+        // Borrar incorporación: solo quita el flag fromInc, NO borra el trabajador del listado
+        html+='<div class="abts" style="margin-left:10px"><button class="btn btn-sm btn-e" onclick="openModal(\'trabajador\',\''+t.id+'\')">Editar</button><button class="btn btn-sm btn-d" onclick="quitarIncorporacion(\''+t.id+'\')" title="Quitar de incorporaciones (no borra el trabajador)">Quitar</button></div>';
         html+='</div>';
       }
       c.innerHTML=html;
     }
   }
-  // Render protocolo de acogida (editable)
   renderProtocolo();
 }
 
