@@ -1199,6 +1199,20 @@ function renderFormPendientes() {
   var cd=document.getElementById('form-done-list');
   if(cp) cp.innerHTML=anyPending?pending_html:'<div style="text-align:center;padding:20px;background:rgba(0,212,170,.06);border:1px solid rgba(0,212,170,.2);border-radius:12px;color:var(--acc);font-size:13px">&#9989; Ninguno con formaciones pendientes</div>';
   if(cd) cd.innerHTML=anyDone?done_html:'<div style="text-align:center;padding:20px;background:var(--sur);border:1px solid var(--brd);border-radius:12px;color:var(--txm);font-size:13px">Sin trabajadores con formaci&#243;n completa todav&#237;a</div>';
+
+  // Actualiza badge del sidebar con el número real de trabajadores con formaciones pendientes
+  var pendCount=0;
+  for(var bi=0;bi<trabajadores.length;bi++){
+    var bt=trabajadores[bi];
+    var breqs=getFormReq(bt.caps||[],bt.puesto);
+    var bhasPending=false;
+    for(var bj=0;bj<breqs.length;bj++){
+      if(!hasFormCompletada(bt.id,breqs[bj])){ bhasPending=true; break; }
+    }
+    if(bhasPending) pendCount++;
+  }
+  var nbFP=document.getElementById('nb-fpend');
+  if(nbFP) nbFP.textContent=pendCount;
 }
 
 var _capSel = [];  // working selection inside modal
@@ -1335,6 +1349,21 @@ function initials(n) {
   for(var i=0;i<parts.length&&r.length<2;i++) if(parts[i]) r+=parts[i][0].toUpperCase();
   return r;
 }
+function fmtActDate(a){
+  if(!a) return '';
+  var d = a.ts ? new Date(a.ts) : null;
+  var hoy=new Date(); hoy.setHours(0,0,0,0);
+  var ayer=new Date(hoy); ayer.setDate(ayer.getDate()-1);
+  if(d){
+    var dDia=new Date(d); dDia.setHours(0,0,0,0);
+    var t=a.time||d.getHours().toString().padStart(2,'0')+':'+d.getMinutes().toString().padStart(2,'0');
+    if(dDia.getTime()===hoy.getTime()) return 'Hoy \u00b7 '+t;
+    if(dDia.getTime()===ayer.getTime()) return 'Ayer \u00b7 '+t;
+    return d.toLocaleDateString('es-ES',{day:'numeric',month:'short'})+' \u00b7 '+t;
+  }
+  return a.time ? 'Hoy \u00b7 '+a.time : 'Antes';
+}
+
 function fmtDate(d) {
   if(!d) return 'Sin fecha';
   try {
@@ -1372,8 +1401,7 @@ function addAct(col,ic,msg) {
     var html='';
     for(var i=0;i<actLog.length&&i<6;i++){
       var a=actLog[i];
-      var tStr=a.time?(' <span style="color:var(--txm);font-size:10px">'+a.time+'</span>'):'';
-      html+='<div class="actitem"><div class="acticon '+a.col+'">'+a.ic+'</div><div><div class="acttext">'+esc(a.msg)+'</div><div class="acttime">Hoy'+tStr+'</div></div></div>';
+      html+='<div class="actitem"><div class="acticon '+a.col+'">'+a.ic+'</div><div><div class="acttext">'+esc(a.msg)+'</div><div class="acttime">'+fmtActDate(a)+'</div></div></div>';
     }
     if(!html) html='<div class="actitem"><div class="acticon g">&#9989;</div><div><div class="acttext">Portal PRL iniciado</div><div class="acttime">Al iniciar</div></div></div>';
     ac.innerHTML=html;
@@ -2244,8 +2272,7 @@ function renderDashboard() {
     var html='';
     for(var i=0;i<actLog.length&&i<6;i++){
       var a=actLog[i];
-      var tStr=a.time?(' <span style="color:var(--txm);font-size:10px">'+a.time+'</span>'):'';
-      html+='<div class="actitem"><div class="acticon '+a.col+'">'+a.ic+'</div><div><div class="acttext">'+esc(a.msg)+'</div><div class="acttime">Hoy'+tStr+'</div></div></div>';
+      html+='<div class="actitem"><div class="acticon '+a.col+'">'+a.ic+'</div><div><div class="acttext">'+esc(a.msg)+'</div><div class="acttime">'+fmtActDate(a)+'</div></div></div>';
     }
     if(!html) html='<div class="actitem"><div class="acticon g">&#9989;</div><div><div class="acttext">Portal PRL iniciado correctamente</div><div class="acttime">Al iniciar</div></div></div>';
     ac.innerHTML=html;
@@ -2750,7 +2777,7 @@ var AUTH_STORAGE_KEY = 'ghdprl_auth';
 // Verifica si hay sesión guardada al cargar
 function checkSession(){
   try{
-    var stored=JSON.parse(localStorage.getItem(AUTH_STORAGE_KEY)||'null');
+    var stored=JSON.parse(sessionStorage.getItem(AUTH_STORAGE_KEY)||'null');
     if(stored && stored.refreshToken && stored.email){
       refreshAuthToken(stored.refreshToken, stored.email);
       return;
@@ -2771,7 +2798,7 @@ function refreshAuthToken(refreshToken, email){
     if(data.id_token){
       _authToken=data.id_token;
       _refreshToken=data.refresh_token;
-      localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify({refreshToken:data.refresh_token, email:email}));
+      sessionStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify({refreshToken:data.refresh_token, email:email}));
       setTimeout(function(){ refreshAuthToken(_refreshToken, email); }, 55*60*1000);
       launchApp(email);
     } else {
@@ -2801,7 +2828,7 @@ function doLogin(){
     if(data.idToken){
       _authToken=data.idToken;
       _refreshToken=data.refreshToken;
-      localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify({refreshToken:data.refreshToken, email:email}));
+      sessionStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify({refreshToken:data.refreshToken, email:email}));
       // Renueva automáticamente cada 55 min
       setTimeout(function(){ refreshAuthToken(_refreshToken, email); }, 55*60*1000);
       launchApp(email);
@@ -2839,7 +2866,7 @@ function launchApp(email){
 // Cierra sesión
 function doLogout(){
   showConfirm('¿Cerrar sesión?', function(){
-    localStorage.removeItem(AUTH_STORAGE_KEY);
+    sessionStorage.removeItem(AUTH_STORAGE_KEY);
     _authToken=''; _refreshToken='';
     location.reload();
   });
