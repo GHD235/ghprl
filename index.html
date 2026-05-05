@@ -9,7 +9,21 @@
 :root{--bg:#0d1117;--sur:#161b22;--sur2:#1c2230;--brd:#2a3547;--acc:#00d4aa;--acc2:#ff6b35;--acc3:#5b8dee;--acc4:#f7c948;--tx:#e6edf3;--txm:#7d8fa8;--danger:#f85149;}
 *{margin:0;padding:0;box-sizing:border-box;}
 body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);min-height:100vh;overflow-x:hidden;}
-/* SIDEBAR */
+/* ── LOGIN SCREEN ───────────────────────────────────────────── */
+#login-screen{position:fixed;inset:0;background:var(--bg);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;}
+.login-box{background:var(--sur);border:1px solid var(--brd);border-radius:18px;padding:36px 32px;width:100%;max-width:380px;text-align:center;}
+.login-logo{width:56px;height:56px;background:linear-gradient(135deg,var(--acc),var(--acc3));border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:26px;margin:0 auto 16px;}
+.login-title{font-family:'Syne',sans-serif;font-weight:800;font-size:22px;margin-bottom:4px;}
+.login-sub{font-size:12px;color:var(--txm);margin-bottom:28px;}
+.login-input{width:100%;background:var(--sur2);border:1px solid var(--brd);border-radius:9px;padding:12px 14px;color:var(--tx);font-size:14px;font-family:'DM Sans',sans-serif;margin-bottom:12px;outline:none;transition:border-color .2s;}
+.login-input:focus{border-color:var(--acc3);}
+.login-btn{width:100%;background:var(--acc3);color:#fff;border:none;border-radius:9px;padding:13px;font-size:14px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:opacity .2s;margin-top:4px;}
+.login-btn:hover{opacity:.88;}
+.login-btn:disabled{opacity:.5;cursor:not-allowed;}
+.login-err{color:#f85149;font-size:12px;margin-top:10px;min-height:18px;}
+.login-spinner{display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:6px;}
+@keyframes spin{to{transform:rotate(360deg)}}
+#app-wrapper{display:none;}
 .sidebar{position:fixed;left:0;top:0;width:236px;height:100vh;background:var(--sur);border-right:1px solid var(--brd);display:flex;flex-direction:column;z-index:100;}
 .slogo{padding:22px 18px 16px;border-bottom:1px solid var(--brd);display:flex;align-items:center;gap:10px;}
 .slogo-icon{width:36px;height:36px;background:linear-gradient(135deg,var(--acc),var(--acc3));border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:17px;}
@@ -261,6 +275,22 @@ tbody td{padding:11px 16px;font-size:13px;vertical-align:middle;}
 </head>
 <body>
 
+<!-- ══ PANTALLA DE LOGIN ══════════════════════════════════════ -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="login-logo">&#128119;&#127995;&#8205;&#9794;&#65039;</div>
+    <div class="login-title">GHDPRL</div>
+    <div class="login-sub">Prevenci&#243;n de Riesgos Laborales &middot; Acceso restringido</div>
+    <input class="login-input" id="login-email" type="email" placeholder="Correo electr&#243;nico" autocomplete="email" onkeydown="if(event.key==='Enter')doLogin()">
+    <input class="login-input" id="login-pass" type="password" placeholder="Contrase&#241;a" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
+    <button class="login-btn" id="login-btn" onclick="doLogin()">Entrar</button>
+    <div class="login-err" id="login-err"></div>
+    <div style="margin-top:20px;font-size:11px;color:var(--txm)">&#128274; Acceso solo para personal autorizado</div>
+  </div>
+</div>
+
+<!-- ══ APLICACI&#211;N (oculta hasta login) ═══════════════════════ -->
+<div id="app-wrapper">
 <aside class="sidebar">
   <div class="slogo">
     <div class="slogo-icon">&#128119;&#127995;&#8205;&#9794;&#65039;</div>
@@ -821,7 +851,7 @@ function guardarAhora(){
   function chk(ok){ if(!ok) errores++; if(--pending<=0) setSyncStatus(errores===0?'saved':'error'); }
 
   Object.keys(payload).forEach(function(t){
-    fetch(FB_URL+'/'+t+'.json',{
+    fetch(fbUrl('/'+t+'.json'),{
       method:'PUT',
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify(payload[t]),
@@ -918,7 +948,7 @@ function reloadFromFirebase(silent){
   var savedFormDrop = _openDropFormacion;
   var savedWorkerDrop = _openDropWorker;
 
-  fetch(FB_URL + '/.json', {cache:'no-store'})
+  fetch(fbUrl('/.json'), {cache:'no-store'})
   .then(function(r){
     if(!r.ok) throw new Error('HTTP ' + r.status);
     return r.json();
@@ -1335,7 +1365,7 @@ function addAct(col,ic,msg) {
   actLog.unshift({col:col,ic:ic,msg:msg,time:timeStr,ts:now.getTime()});
   if(actLog.length>10) actLog.pop();
   // Guarda actLog en Firebase para que sea visible en todos los dispositivos
-  fetch(FB_URL+'/actLog.json',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(actLog),keepalive:true}).catch(function(){});
+  fetch(fbUrl('/actLog.json'),{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(actLog),keepalive:true}).catch(function(){});
   // Actualiza el widget del dashboard si está visible
   var ac=document.getElementById('dash-act');
   if(ac){
@@ -2703,13 +2733,139 @@ function renderAll() {
   renderEnlaces();
 }
 
+// ════════════════════════════════════════════════════════════════
+// ── FIREBASE AUTH ─────────────────────────────────────────────
+// ════════════════════════════════════════════════════════════════
+// Tu API Key de Firebase (ve a Firebase Console → Configuración del proyecto → Tus apps → API Key web)
+var FIREBASE_API_KEY = 'AIzaSyDBFpXf2_nABFTzvQsFR7Z3rpd9dHjsU_8';
+
+// ── CONTROL DE ACCESO ────────────────────────────────────────
+// Solo necesitas gestionar usuarios desde Firebase Console → Authentication → Users
+// Si añades un usuario allí puede entrar. Si lo eliminas, no puede. Sin tocar código.
+
+var _authToken = '';
+var _refreshToken = '';
+var AUTH_STORAGE_KEY = 'ghdprl_auth';
+
+// Verifica si hay sesión guardada al cargar
+function checkSession(){
+  try{
+    var stored=JSON.parse(localStorage.getItem(AUTH_STORAGE_KEY)||'null');
+    if(stored && stored.refreshToken && stored.email){
+      refreshAuthToken(stored.refreshToken, stored.email);
+      return;
+    }
+  }catch(e){}
+  showLoginScreen();
+}
+
+// Renueva el idToken usando el refreshToken guardado
+function refreshAuthToken(refreshToken, email){
+  fetch('https://securetoken.googleapis.com/v1/token?key='+FIREBASE_API_KEY,{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({grant_type:'refresh_token',refresh_token:refreshToken})
+  })
+  .then(function(r){return r.json();})
+  .then(function(data){
+    if(data.id_token){
+      _authToken=data.id_token;
+      _refreshToken=data.refresh_token;
+      localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify({refreshToken:data.refresh_token, email:email}));
+      setTimeout(function(){ refreshAuthToken(_refreshToken, email); }, 55*60*1000);
+      launchApp(email);
+    } else {
+      showLoginScreen();
+    }
+  })
+  .catch(function(){ showLoginScreen(); });
+}
+
+// Proceso de login
+function doLogin(){
+  var email=(document.getElementById('login-email').value||'').trim().toLowerCase();
+  var pass=document.getElementById('login-pass').value||'';
+  var errEl=document.getElementById('login-err');
+  var btn=document.getElementById('login-btn');
+  errEl.textContent='';
+  if(!email||!pass){errEl.textContent='Introduce email y contraseña.';return;}
+  btn.disabled=true;
+  btn.innerHTML='<span class="login-spinner"></span>Verificando...';
+  fetch('https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key='+FIREBASE_API_KEY,{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({email:email,password:pass,returnSecureToken:true})
+  })
+  .then(function(r){return r.json();})
+  .then(function(data){
+    if(data.idToken){
+      _authToken=data.idToken;
+      _refreshToken=data.refreshToken;
+      localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify({refreshToken:data.refreshToken, email:email}));
+      // Renueva automáticamente cada 55 min
+      setTimeout(function(){ refreshAuthToken(_refreshToken, email); }, 55*60*1000);
+      launchApp(email);
+    } else {
+      var msg='Email o contraseña incorrectos.';
+      if(data.error){
+        if(data.error.message==='EMAIL_NOT_FOUND'||data.error.message==='INVALID_PASSWORD'||data.error.message==='INVALID_LOGIN_CREDENTIALS') msg='Email o contraseña incorrectos.';
+        else if(data.error.message==='TOO_MANY_ATTEMPTS_TRY_LATER') msg='Demasiados intentos. Espera unos minutos.';
+      }
+      errEl.textContent=msg;
+      btn.disabled=false; btn.innerHTML='Entrar';
+    }
+  })
+  .catch(function(){
+    errEl.textContent='Error de conexión. Comprueba tu internet.';
+    btn.disabled=false; btn.innerHTML='Entrar';
+  });
+}
+
+// Lanza la app tras autenticación exitosa
+function launchApp(email){
+  document.getElementById('login-screen').style.display='none';
+  document.getElementById('app-wrapper').style.display='block';
+  // Añade botón de cerrar sesión en el sidebar
+  var signoutBtn=document.createElement('div');
+  signoutBtn.style.cssText='padding:12px 18px;border-top:1px solid var(--brd);font-size:11px;color:var(--txm);cursor:pointer;display:flex;align-items:center;gap:8px;';
+  signoutBtn.innerHTML='&#128274; '+email.split('@')[0]+' &nbsp;<span style="margin-left:auto;color:#f85149">Salir</span>';
+  signoutBtn.onclick=doLogout;
+  var sidebar=document.querySelector('.sidebar');
+  if(sidebar) sidebar.appendChild(signoutBtn);
+  // Inicializa la app
+  initDB();
+}
+
+// Cierra sesión
+function doLogout(){
+  showConfirm('¿Cerrar sesión?', function(){
+    localStorage.removeItem(AUTH_STORAGE_KEY);
+    _authToken=''; _refreshToken='';
+    location.reload();
+  });
+}
+
+function showLoginScreen(){
+  document.getElementById('login-screen').style.display='flex';
+  document.getElementById('app-wrapper').style.display='none';
+  var btn=document.getElementById('login-btn');
+  if(btn){btn.disabled=false; btn.innerHTML='Entrar';}
+}
+
+// Añade el token de auth a todas las URLs de Firebase
+function fbUrl(path){
+  return FB_URL + path + (_authToken ? '?auth='+_authToken : '');
+}
+
 // ── INIT ──────────────────────────────────────────────────────
 var now=new Date();
 var tbdate=document.getElementById('tbdate');
 var sdate=document.getElementById('sdate');
 if(tbdate) tbdate.textContent=now.toLocaleDateString('es-ES',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
 if(sdate) sdate.textContent=now.toLocaleDateString('es-ES',{month:'short',year:'numeric'});
-initDB();
+// initDB() se llama desde checkSession() tras autenticar
+checkSession();
 </script>
+</div><!-- /app-wrapper -->
 </body>
 </html>
