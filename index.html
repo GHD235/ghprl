@@ -981,7 +981,7 @@ function startRealtime(){
   if(_pollInterval) return;
   _pollInterval = setInterval(function(){
     if(!_saveTimer) reloadFromFirebase(true);
-  }, 5000);
+  }, 30000); // 30s — ahorra ancho de banda (caben ~17 usuarios en plan gratuito)
   setSyncStatus('live');
 }
 
@@ -1015,6 +1015,7 @@ function showSqlSchema(){}
 
 // ── CARPETAS ──────────────────────────────────────────────────
 function openModalCarpeta(id){
+  if(!isAdmin()){toast('Modo solo lectura \u2014 contacta con el administrador','#5b8dee');return;}
   var allM=['m-trabajador','m-formacion','m-designacion','m-documento','m-riesgo','m-epi','m-herramienta','m-solicitud','m-carpeta'];
   allM.forEach(function(m){ var el=document.getElementById(m); if(el) el.classList.remove('open'); });
   editId['carpeta']=id||null;
@@ -1117,6 +1118,7 @@ var FORM_PUESTO = {'OBRA CIVIL':['2°ALBANILERIA']};
 var formCompletadas = {};
 
 function toggleFormCompletada(trabId, formKey) {
+  if(!isAdmin()){toast('Modo solo lectura \u2014 contacta con el administrador','#5b8dee');return;}
   if(!formCompletadas[trabId]) formCompletadas[trabId]={};
   if(formCompletadas[trabId][formKey]) delete formCompletadas[trabId][formKey];
   else formCompletadas[trabId][formKey]=true;
@@ -1381,6 +1383,10 @@ function toast(msg, col) {
 
 var confCb=null;
 function showConfirm(msg,cb) {
+  if(!isAdmin()){
+    toast('Modo solo lectura \u2014 contacta con el administrador','#5b8dee');
+    return;
+  }
   document.getElementById('conf-msg').textContent=msg;
   confCb=cb;
   document.getElementById('conf-ok').onclick=function(){closeConfirm();cb();};
@@ -1441,6 +1447,11 @@ function showPage(id, navEl) {
 
 // ── MODALS ────────────────────────────────────────────────────
 function openModal(tipo, id, focusField) {
+  // Bloqueo para usuarios en modo consulta
+  if(!isAdmin()){
+    toast('Modo solo lectura \u2014 contacta con el administrador','#5b8dee');
+    return;
+  }
   var allM=['m-trabajador','m-formacion','m-designacion','m-documento','m-riesgo','m-epi','m-herramienta','m-solicitud'];
   for(var i=0;i<allM.length;i++) document.getElementById(allM[i]).classList.remove('open');
   editId[tipo]=id||null;
@@ -2294,6 +2305,7 @@ function uploadDoc(input) {
 
 // ── SOLICITUDES ───────────────────────────────────────────────
 function openModalSolicitud(id) {
+  if(!isAdmin()){toast('Modo solo lectura \u2014 contacta con el administrador','#5b8dee');return;}
   editId['solicitud']=id||null;
   var editing=!!id;
   hideErr('sol-err');
@@ -2491,6 +2503,7 @@ var protocolo = [
 ];
 
 function openModalProtocolo(id){
+  if(!isAdmin()){toast('Modo solo lectura \u2014 contacta con el administrador','#5b8dee');return;}
   editId['protocolo']=id||null;
   var editing=!!id;
   hideErr('pr-err');
@@ -2688,6 +2701,7 @@ var enlaces = [
 ];
 
 function openModalEnlace(id){
+  if(!isAdmin()){toast('Modo solo lectura \u2014 contacta con el administrador','#5b8dee');return;}
   var allM=['m-trabajador','m-formacion','m-designacion','m-epi','m-herramienta','m-solicitud','m-carpeta','m-enlace'];
   allM.forEach(function(x){ var e=document.getElementById(x); if(e) e.classList.remove('open'); });
   editId['enlace']=id||null;
@@ -2758,6 +2772,30 @@ function renderAll() {
   renderSolicitudes();
   renderCarpetas();
   renderEnlaces();
+  // Si no es admin, elimina del DOM todos los botones de acción
+  if(!isAdmin()) purgeEditButtons();
+}
+
+// Elimina físicamente del DOM todos los botones de edición/creación para no-admins
+function purgeEditButtons(){
+  // Botones editar/borrar/añadir
+  var sels=['.btn-e','.btn-d','.btn-p[onclick*="openModal"]',
+    '[onclick*="openModal"]','[onclick*="openModalCarpeta"]',
+    '[onclick*="openModalSolicitud"]','[onclick*="openModalEnlace"]',
+    '[onclick*="openModalProtocolo"]','[onclick*="delTrabajador"]',
+    '[onclick*="delFormacion"]','[onclick*="delSolicitud"]',
+    '[onclick*="delCarpeta"]','[onclick*="delEnlace"]',
+    '[onclick*="delProtocolo"]','[onclick*="delEpi"]',
+    '[onclick*="delHerramienta"]','[onclick*="delDesignacion"]',
+    '[onclick*="saveTrabajador"]','[onclick*="quitarIncorporacion"]',
+    '[onclick*="changeSolEstado"]','[onclick*="toggleFormCompletada"]',
+    '[onclick*="_fromInc"]'];
+  sels.forEach(function(sel){
+    try{
+      var els=document.querySelectorAll(sel);
+      for(var i=0;i<els.length;i++) if(els[i].parentNode) els[i].parentNode.removeChild(els[i]);
+    }catch(e){}
+  });
 }
 
 // ════════════════════════════════════════════════════════════════
@@ -2771,6 +2809,18 @@ var FIREBASE_API_KEY = 'AIzaSyDBFpXf2_nABFTzvQsFR7Z3rpd9dHjsU_8';
 // Si añades un usuario allí puede entrar. Si lo eliminas, no puede. Sin tocar código.
 
 var _authToken = '';
+var _currentUserEmail = '';  // email del usuario en sesión
+
+// ── EMAILS CON PERMISOS DE EDICIÓN ───────────────────────────
+// Solo estos emails pueden crear, editar y borrar registros.
+// El resto de usuarios podrán consultar pero no modificar nada.
+var ADMIN_EMAILS = [
+  'guilleherdo@gmail.com'
+];
+
+function isAdmin(){
+  return ADMIN_EMAILS.some(function(e){ return e.toLowerCase()===_currentUserEmail.toLowerCase(); });
+}
 var _refreshToken = '';
 var AUTH_STORAGE_KEY = 'ghdprl_auth';
 
@@ -2850,16 +2900,40 @@ function doLogin(){
 
 // Lanza la app tras autenticación exitosa
 function launchApp(email){
+  _currentUserEmail = email;
   document.getElementById('login-screen').style.display='none';
   document.getElementById('app-wrapper').style.display='block';
-  // Añade botón de cerrar sesión en el sidebar
+  var admin = isAdmin();
+  // Botón de sesión en sidebar
   var signoutBtn=document.createElement('div');
   signoutBtn.style.cssText='padding:12px 18px;border-top:1px solid var(--brd);font-size:11px;color:var(--txm);cursor:pointer;display:flex;align-items:center;gap:8px;';
-  signoutBtn.innerHTML='&#128274; '+email.split('@')[0]+' &nbsp;<span style="margin-left:auto;color:#f85149">Salir</span>';
+  var roleBadge = admin
+    ? '<span style="background:rgba(248,81,73,.15);color:#f85149;padding:1px 7px;border-radius:10px;font-size:9px;font-weight:700;margin-left:4px">ADMIN</span>'
+    : '<span style="background:rgba(91,141,238,.15);color:#5b8dee;padding:1px 7px;border-radius:10px;font-size:9px;font-weight:700;margin-left:4px">CONSULTA</span>';
+  signoutBtn.innerHTML='&#128274; '+email.split('@')[0]+roleBadge+'&nbsp;<span style="margin-left:auto;color:#f85149">Salir</span>';
   signoutBtn.onclick=doLogout;
   var sidebar=document.querySelector('.sidebar');
   if(sidebar) sidebar.appendChild(signoutBtn);
-  // Inicializa la app
+  // Si no es admin, aviso visual de modo consulta
+  if(!admin){
+    var banner=document.createElement('div');
+    banner.style.cssText='position:fixed;bottom:0;left:0;right:0;background:rgba(91,141,238,.12);border-top:1px solid rgba(91,141,238,.3);padding:7px 16px;font-size:11px;color:#5b8dee;z-index:500;text-align:center;';
+    banner.innerHTML='&#128274; Modo consulta &mdash; solo lectura. Contacta con el administrador para realizar cambios.';
+    document.body.appendChild(banner);
+  }
+  // Si no es admin, inyecta CSS que oculta botones de acción del topbar
+  if(!admin){
+    var style=document.createElement('style');
+    style.textContent=
+      '#btn-nueva-inc{display:none!important}'+
+      '.topbar .btn-p[onclick*="openModal"]{display:none!important}'+
+      '.topbar .btn-g[onclick*="openModal"]{display:none!important}'+
+      '.topbar .btn[onclick*="_fromInc"]{display:none!important}'+
+      // Cursor pointer eliminado en elementos interactivos de solo consulta
+      '[onclick*="toggleFormCompletada"]{cursor:default!important;pointer-events:none!important}'+
+      '[onclick*="changeSolEstado"]{cursor:default!important;pointer-events:none!important}';
+    document.head.appendChild(style);
+  }
   initDB();
 }
 
