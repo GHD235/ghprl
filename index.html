@@ -86,26 +86,103 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);min-h
 .btn-d{background:rgba(255,77,109,.08);color:var(--danger);border:1px solid rgba(255,77,109,.25);}
 .btn-d:hover{background:rgba(255,77,109,.16);}
 
-/* ── LAYOUT / CARDS ─────────────────────────────────────────── */
+/* ── LAYOUT / CARDS — BENTO STYLE ───────────────────────────── */
 .stats3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:24px;}
-.stat{background:linear-gradient(135deg,rgba(13,19,48,.9),rgba(17,26,62,.8));border:1px solid rgba(28,42,94,.8);border-radius:18px;padding:22px;transition:all .25s;position:relative;overflow:hidden;}
-.stat::before{content:'';position:absolute;top:0;right:0;width:60px;height:60px;border-radius:0 18px 0 60px;background:linear-gradient(135deg,rgba(0,212,255,.06),rgba(123,111,255,.06));}
-.stat:hover{transform:translateY(-3px);border-color:rgba(0,212,255,.3);box-shadow:0 8px 30px rgba(0,212,255,.1);}
-.stat-lbl{font-size:10px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--txm);margin-bottom:8px;}
-.stat-val{font-family:'Syne',sans-serif;font-size:40px;font-weight:800;line-height:1;}
-.stat-val.g{color:var(--acc);text-shadow:0 0 20px rgba(0,212,255,.4);}
-.stat-val.o{color:var(--acc2);text-shadow:0 0 20px rgba(255,107,138,.4);}
-.stat-val.b{color:var(--acc3);text-shadow:0 0 20px rgba(123,111,255,.4);}
-.stat-desc{font-size:11px;color:var(--txm);margin-top:7px;}
+.stat{border-radius:24px;padding:24px;transition:all .25s;position:relative;overflow:hidden;}
+.stat:nth-child(1){background:linear-gradient(135deg,#0f1f5c,#1a2a7a);border:1px solid rgba(0,212,255,.25);}
+.stat:nth-child(2){background:linear-gradient(135deg,#1a0a2e,#2d1060);border:1px solid rgba(123,111,255,.3);}
+.stat:nth-child(3){background:linear-gradient(135deg,#0a1f1a,#0d3028);border:1px solid rgba(0,212,255,.2);}
+.stat:nth-child(1):hover,.stat:nth-child(2):hover,.stat:nth-child(3):hover{transform:translateY(-4px);box-shadow:0 12px 40px rgba(0,0,0,.4);}
+.stat::after{content:'';position:absolute;bottom:-20px;right:-20px;width:80px;height:80px;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.06),transparent);}
+.stat-lbl{font-size:10px;font-weight:600;letter-spacing:1.2px;text-transform:uppercase;color:rgba(255,255,255,.5);margin-bottom:10px;}
+.stat-val{font-family:'Syne',sans-serif;font-size:44px;font-weight:800;line-height:1;}
+.stat-val.g{color:#00d4ff;text-shadow:0 0 24px rgba(0,212,255,.5);}
+.stat-val.o{color:#ff6b8a;text-shadow:0 0 24px rgba(255,107,138,.5);}
+.stat-val.b{color:#a89cff;text-shadow:0 0 24px rgba(123,111,255,.5);}
+.stat-desc{font-size:11px;color:rgba(255,255,255,.4);margin-top:8px;}
 .two{display:grid;grid-template-columns:2fr 1fr;gap:18px;margin-bottom:24px;}
-.card{background:linear-gradient(135deg,rgba(13,19,48,.9),rgba(17,26,62,.7));border:1px solid rgba(28,42,94,.8);border-radius:18px;padding:22px;}
+.card{background:linear-gradient(135deg,rgba(13,19,60,.95),rgba(17,26,72,.8));border:1px solid rgba(28,42,110,.7);border-radius:24px;padding:24px;}
 .card-t{font-family:'Syne',sans-serif;font-size:14px;font-weight:700;margin-bottom:14px;}
 .stitle{font-family:'Syne',sans-serif;font-size:22px;font-weight:700;margin-bottom:3px;}
 .ssub{font-size:12px;color:var(--txm);margin-bottom:20px;}
 .rowb{display:flex;justify-content:space-between;align-items:center;margin-bottom:13px;}
 
+/* ── TABLE WRAP ─────────────────────────────────────────────── */
+.twrap{background:linear-gradient(135deg,rgba(13,19,60,.95),rgba(17,26,72,.8));border:1px solid rgba(28,42,110,.7);border-radius:24px;overflow:hidden;}
+
+/* ── NOTEBOOK BENTO ─────────────────────────────────────────── */
+.nbgrid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.nbcard{border-radius:22px;padding:24px;text-decoration:none;color:inherit;display:block;transition:all .22s;}
+.nbcard:nth-child(odd){background:linear-gradient(135deg,#0f1f5c,#1a2a80);border:1px solid rgba(0,212,255,.2);}
+.nbcard:nth-child(even){background:linear-gradient(135deg,#1a0a2e,#2d1060);border:1px solid rgba(123,111,255,.25);}
+.nbcard:hover{transform:translateY(-4px);box-shadow:0 12px 40px rgba(0,0,0,.4);}
+.nbicon{width:46px;height:46px;border-radius:14px;background:rgba(255,255,255,.1);display:flex;align-items:center;justify-content:center;font-size:20px;margin-bottom:14px;}
+.nbtitle{font-family:'Syne',sans-serif;font-size:15px;font-weight:700;margin-bottom:5px;color:#fff;}
+.nbdesc{font-size:12px;color:rgba(255,255,255,.5);line-height:1.6;margin-bottom:14px;}
+.nbfoot{display:flex;justify-content:space-between;font-size:11px;color:rgba(255,255,255,.35);padding-top:10px;border-top:1px solid rgba(255,255,255,.08);}
+.nbcard-wrap{position:relative;}
+
+/* ── INCORPORACIONES BENTO ──────────────────────────────────── */
+.inccard{background:linear-gradient(135deg,rgba(13,19,60,.95),rgba(17,26,72,.8));border:1px solid rgba(28,42,110,.7);border-radius:20px;padding:14px;display:flex;align-items:center;gap:12px;transition:all .2s;}
+.inccard:hover{border-color:rgba(0,212,255,.3);transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,.3);}
+
+/* ── EPIS BENTO ─────────────────────────────────────────────── */
+.epistat{border-radius:22px;padding:20px;text-align:center;transition:all .2s;}
+.epistat:nth-child(1){background:linear-gradient(135deg,#0a1f1a,#0d3028);border:1px solid rgba(0,212,255,.2);}
+.epistat:nth-child(2){background:linear-gradient(135deg,#1a1500,#302a00);border:1px solid rgba(247,201,72,.2);}
+.epistat:nth-child(3){background:linear-gradient(135deg,#1a0a0e,#300a12);border:1px solid rgba(255,77,109,.2);}
+.epistat:hover{transform:translateY(-3px);box-shadow:0 8px 24px rgba(0,0,0,.3);}
+
+/* ── PROGRESS BARS BENTO ────────────────────────────────────── */
+.pbar-wrap{margin-bottom:14px;}
+.pbar-hdr{display:flex;justify-content:space-between;font-size:12px;margin-bottom:6px;}
+.pbar{height:8px;background:rgba(17,26,62,.9);border-radius:20px;overflow:hidden;}
+.pbar-fill{height:100%;border-radius:20px;background:linear-gradient(90deg,var(--acc3),var(--acc));box-shadow:0 0 10px rgba(0,212,255,.35);}
+
+/* ── MODAL BENTO ─────────────────────────────────────────────── */
+.modal{background:linear-gradient(135deg,rgba(10,14,45,.99),rgba(15,22,65,.97));border:1px solid rgba(28,42,110,.9);border-radius:28px;padding:30px;width:92%;max-width:500px;position:relative;animation:fup .25s ease;box-shadow:0 24px 80px rgba(0,0,0,.7),0 0 50px rgba(123,111,255,.08);}
+.finput{width:100%;background:rgba(7,11,36,.7);border:1px solid rgba(28,42,110,.8);border-radius:14px;padding:10px 14px;color:var(--tx);font-family:'DM Sans',sans-serif;font-size:13px;outline:none;transition:all .15s;}
+.finput:focus{border-color:rgba(0,212,255,.5);box-shadow:0 0 0 3px rgba(0,212,255,.08);}
+
+/* ── CALENDAR BENTO ──────────────────────────────────────────── */
+.calwrap{background:linear-gradient(135deg,rgba(13,19,60,.95),rgba(17,26,72,.8));border:1px solid rgba(28,42,110,.7);border-radius:24px;padding:22px;margin-bottom:24px;}
+
+/* ── BENTO GRID — ACCESOS DIRECTOS ──────────────────────────── */
+.bento-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:28px;}
+.bento-card{border-radius:24px;padding:22px 20px;cursor:pointer;transition:all .25s;display:flex;flex-direction:column;gap:8px;min-height:140px;position:relative;overflow:hidden;}
+.bento-card::after{content:'';position:absolute;bottom:-30px;right:-30px;width:90px;height:90px;border-radius:50%;background:rgba(255,255,255,.04);}
+.bento-card:hover{transform:translateY(-5px);box-shadow:0 16px 40px rgba(0,0,0,.45);}
+.bento-icon{font-size:26px;line-height:1;}
+.bento-title{font-family:'Syne',sans-serif;font-size:14px;font-weight:700;color:#fff;line-height:1.3;}
+.bento-desc{font-size:11px;color:rgba(255,255,255,.5);line-height:1.5;flex:1;}
+.bento-arrow{font-size:16px;color:rgba(255,255,255,.3);margin-top:4px;transition:color .2s;}
+.bento-card:hover .bento-arrow{color:rgba(255,255,255,.75);}
+.bento-cal{background:linear-gradient(135deg,#0f2a5c,#1a3a8a);border:1px solid rgba(0,212,255,.25);}
+.bento-pend{background:linear-gradient(135deg,#2a1500,#4a2800);border:1px solid rgba(247,201,72,.25);}
+.bento-trab{background:linear-gradient(135deg,#0a2a1a,#0f4030);border:1px solid rgba(0,212,170,.25);}
+.bento-inc{background:linear-gradient(135deg,#1a0a2e,#2d1460);border:1px solid rgba(163,113,247,.3);}
+.bento-des{background:linear-gradient(135deg,#2a0a10,#4a0e18);border:1px solid rgba(255,77,109,.25);}
+.bento-ia{background:linear-gradient(135deg,#0a1f3a,#112d5a);border:1px solid rgba(91,141,238,.3);}
+.bento-doc{background:linear-gradient(135deg,#1a1500,#302800);border:1px solid rgba(247,201,72,.2);}
+.bento-epi{background:linear-gradient(135deg,#0a2820,#0e3a2e);border:1px solid rgba(0,212,255,.2);}
+.bento-org{background:linear-gradient(135deg,#1a0e2e,#2a1650);border:1px solid rgba(123,111,255,.25);}
+.bento-cal:hover{border-color:rgba(0,212,255,.5);box-shadow:0 16px 40px rgba(0,100,255,.2);}
+.bento-pend:hover{border-color:rgba(247,201,72,.5);box-shadow:0 16px 40px rgba(200,130,0,.15);}
+.bento-trab:hover{border-color:rgba(0,212,170,.5);box-shadow:0 16px 40px rgba(0,170,120,.15);}
+.bento-inc:hover{border-color:rgba(163,113,247,.6);box-shadow:0 16px 40px rgba(120,70,220,.2);}
+.bento-des:hover{border-color:rgba(255,77,109,.5);box-shadow:0 16px 40px rgba(200,30,60,.15);}
+.bento-ia:hover{border-color:rgba(91,141,238,.6);box-shadow:0 16px 40px rgba(50,100,220,.2);}
+.bento-doc:hover{border-color:rgba(247,201,72,.4);box-shadow:0 16px 40px rgba(180,130,0,.12);}
+.bento-epi:hover{border-color:rgba(0,212,255,.45);box-shadow:0 16px 40px rgba(0,170,170,.12);}
+.bento-org:hover{border-color:rgba(123,111,255,.5);box-shadow:0 16px 40px rgba(90,70,200,.15);}
+
+/* ── QUICK LINKS ─────────────────────────────────────────────── */
+.qgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:22px;}
+.qlink{border-radius:20px;padding:18px;text-align:center;text-decoration:none;color:inherit;display:block;transition:all .18s;}
+.qlink:hover{transform:translateY(-3px);box-shadow:0 8px 24px rgba(0,0,0,.35);}
+
 /* ── ALERTS ─────────────────────────────────────────────────── */
-.alert{border-radius:12px;padding:12px 16px;display:flex;align-items:center;gap:10px;font-size:12.5px;margin-bottom:14px;}
+.alert{border-radius:16px;padding:13px 18px;display:flex;align-items:center;gap:10px;font-size:12.5px;margin-bottom:14px;}
 .alert.w{background:rgba(255,107,138,.08);border:1px solid rgba(255,107,138,.25);color:#ffb0c0;}
 .alert.i{background:rgba(123,111,255,.08);border:1px solid rgba(123,111,255,.25);color:#b8b3ff;}
 .alert.s{background:rgba(0,212,255,.08);border:1px solid rgba(0,212,255,.25);color:#80eeff;}
@@ -192,21 +269,25 @@ tbody td{padding:12px 18px;font-size:13px;vertical-align:middle;}
 .evchev.open{transform:rotate(180deg);}
 
 /* ── CALENDAR ────────────────────────────────────────────────── */
-.cal{background:linear-gradient(135deg,rgba(13,19,48,.9),rgba(17,26,62,.7));border:1px solid rgba(28,42,94,.8);border-radius:18px;padding:18px;}
+.calwrap{background:linear-gradient(135deg,rgba(13,19,48,.95),rgba(17,26,62,.8));border:1px solid rgba(28,42,94,.8);border-radius:18px;padding:20px;margin-bottom:22px;}
+.calhdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+.calmonth{font-family:'Syne',sans-serif;font-size:15px;font-weight:700;}
+.calnav{display:flex;gap:6px;}
 .calhead{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+.cal{background:linear-gradient(135deg,rgba(13,19,48,.9),rgba(17,26,62,.7));border:1px solid rgba(28,42,94,.8);border-radius:18px;padding:18px;}
 .cal-title{font-family:'Syne',sans-serif;font-size:15px;font-weight:700;}
-.calnbtn{background:rgba(17,26,62,.8);border:1px solid rgba(28,42,94,.8);color:var(--tx);width:30px;height:30px;border-radius:8px;cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;transition:all .15s;}
+.calnbtn{background:rgba(17,26,62,.8);border:1px solid rgba(28,42,94,.8);color:var(--tx);width:30px;height:30px;border-radius:8px;cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center;transition:all .15s;}
 .calnbtn:hover{border-color:var(--acc);color:var(--acc);}
 .calgrid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;}
 .caldn{text-align:center;font-size:10px;font-weight:600;color:var(--txm);padding:4px;text-transform:uppercase;letter-spacing:.5px;}
-.cald{text-align:center;padding:7px 4px;font-size:13px;border-radius:8px;cursor:default;transition:all .15s;}
-.cald.other{color:rgba(107,125,181,.3);}
-.cald.today{background:linear-gradient(135deg,rgba(0,212,255,.2),rgba(123,111,255,.2));color:var(--acc);font-weight:700;border:1px solid rgba(0,212,255,.3);box-shadow:0 0 12px rgba(0,212,255,.15);}
+.cald{text-align:center;padding:8px 4px;font-size:13px;border-radius:8px;cursor:default;transition:all .15s;}
+.cald.other{color:rgba(107,125,181,.25);}
+.cald.today{background:linear-gradient(135deg,rgba(0,212,255,.2),rgba(123,111,255,.2));color:var(--acc);font-weight:700;border:1px solid rgba(0,212,255,.35);box-shadow:0 0 14px rgba(0,212,255,.18);}
 .cald:not(.other):hover{background:rgba(123,111,255,.1);}
 .caldot{width:5px;height:5px;border-radius:50%;background:var(--acc2);margin:2px auto 0;box-shadow:0 0 6px var(--acc2);}
-.calleg{display:flex;gap:14px;margin-top:12px;flex-wrap:wrap;}
-.calleg-item{display:flex;align-items:center;gap:5px;font-size:10px;color:var(--txm);}
-.calleg-dot{width:7px;height:7px;border-radius:50%;}
+.calleg{display:flex;gap:14px;margin-top:14px;flex-wrap:wrap;}
+.calleg span{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--txm);}
+.legd{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
 
 /* ── INCORPORACIONES ─────────────────────────────────────────── */
 .inclist{display:flex;flex-direction:column;gap:12px;margin-bottom:20px;}
@@ -261,11 +342,6 @@ tbody td{padding:12px 18px;font-size:13px;vertical-align:middle;}
 .nbdesc{font-size:12px;color:var(--txm);line-height:1.6;margin-bottom:14px;}
 .nbfoot{display:flex;justify-content:space-between;font-size:11px;color:var(--txm);padding-top:10px;border-top:1px solid rgba(28,42,94,.5);}
 .nbcard-wrap{position:relative;}
-
-/* ── QUICK LINKS ─────────────────────────────────────────────── */
-.qgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:22px;}
-.qlink{background:linear-gradient(135deg,rgba(13,19,48,.9),rgba(17,26,62,.7));border:1px solid rgba(28,42,94,.8);border-radius:14px;padding:16px;text-align:center;text-decoration:none;color:inherit;display:block;transition:all .18s;}
-.qlink:hover{border-color:rgba(0,212,255,.3);background:rgba(0,212,255,.05);transform:translateY(-2px);}
 
 /* ── MODAL ───────────────────────────────────────────────────── */
 .moverlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:300;align-items:center;justify-content:center;backdrop-filter:blur(8px);}
@@ -410,17 +486,65 @@ tbody td{padding:12px 18px;font-size:13px;vertical-align:middle;}
         <div class="card"><div class="card-t">Cobertura por encargado</div><div id="dash-depts"></div></div>
         <div class="card"><div class="card-t">Actividad reciente</div><div class="actfeed" id="dash-act"></div></div>
       </div>
-      <div style="font-family:'Syne',sans-serif;font-size:16px;font-weight:700;margin-bottom:13px">Accesos directos</div>
-      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:13px">
-        <div class="nbcard" onclick="showPage('calendario',null)" style="cursor:pointer"><div class="nbicon" style="background:rgba(0,212,170,.15)">&#128197;</div><div class="nbtitle">Calendario Formaciones</div><div class="nbdesc">Planifica y gestiona todas las formaciones PRL.</div></div>
-        <div class="nbcard" onclick="showPage('formpendientes',null)" style="cursor:pointer"><div class="nbicon" style="background:rgba(247,201,72,.15)">&#9888;&#65039;</div><div class="nbtitle">Formaciones Pendientes</div><div class="nbdesc">Trabajadores con formaciones por completar.</div></div>
-        <div class="nbcard" onclick="showPage('trabajadores',null)" style="cursor:pointer"><div class="nbicon">&#128101;</div><div class="nbtitle">Listado Trabajadores</div><div class="nbdesc">Fichas, estado formativo, aptitud m&#233;dica y EPIs.</div></div>
-        <div class="nbcard" onclick="showPage('incorporaciones',null)" style="cursor:pointer"><div class="nbicon" style="background:rgba(91,141,238,.15)">&#10024;</div><div class="nbtitle">Nuevas Incorporaciones</div><div class="nbdesc">Protocolo de acogida PRL.</div></div>
-        <div class="nbcard" onclick="showPage('designacion',null)" style="cursor:pointer"><div class="nbicon" style="background:rgba(248,81,73,.15)">&#127919;</div><div class="nbtitle">Designaci&#243;n PRL</div><div class="nbdesc">Responsables y trabajadores designados.</div></div>
-        <div class="nbcard" onclick="showPage('notebook',null)" style="cursor:pointer"><div class="nbicon" style="background:rgba(163,113,247,.15)">&#129504;</div><div class="nbtitle">IA &#8212; Normativa</div><div class="nbdesc">Asistente IA para resumen normativa PRL.</div></div>
-        <div class="nbcard" onclick="showPage('documentos',null)" style="cursor:pointer"><div class="nbicon" style="background:rgba(247,201,72,.15)">&#128193;</div><div class="nbtitle">Documentaci&#243;n</div><div class="nbdesc">Carpetas compartidas y repositorio PRL.</div></div>
-        <div class="nbcard" onclick="showPage('equipos',null)" style="cursor:pointer"><div class="nbicon" style="background:rgba(0,212,170,.15)">&#129686;</div><div class="nbtitle">Revisi&#243;n EPIs</div><div class="nbdesc">Control de equipos de protecci&#243;n individual.</div></div>
-        <div class="nbcard" onclick="showPage('enlaces',null)" style="cursor:pointer"><div class="nbicon" style="background:rgba(91,141,238,.15)">&#128279;</div><div class="nbtitle">Organismos y Normativa</div><div class="nbdesc">Accesos directos a organismos oficiales.</div></div>
+      <div style="font-family:'Syne',sans-serif;font-size:16px;font-weight:700;margin-bottom:14px">Accesos directos</div>
+      <div class="bento-grid">
+        <!-- Fila 1: Calendario (grande) + Formaciones Pendientes + Trabajadores -->
+        <div class="bento-card bento-cal" onclick="showPage('calendario',null)">
+          <div class="bento-icon">&#128197;</div>
+          <div class="bento-title">Calendario Formaciones</div>
+          <div class="bento-desc">Planifica y gestiona todas las formaciones PRL.</div>
+          <div class="bento-arrow">&#8594;</div>
+        </div>
+        <div class="bento-card bento-pend" onclick="showPage('formpendientes',null)">
+          <div class="bento-icon">&#9888;&#65039;</div>
+          <div class="bento-title">Formaciones Pendientes</div>
+          <div class="bento-desc">Trabajadores con formaciones por completar.</div>
+          <div class="bento-arrow">&#8594;</div>
+        </div>
+        <div class="bento-card bento-trab" onclick="showPage('trabajadores',null)">
+          <div class="bento-icon">&#128101;</div>
+          <div class="bento-title">Listado Trabajadores</div>
+          <div class="bento-desc">Fichas, estado formativo, aptitud médica y EPIs.</div>
+          <div class="bento-arrow">&#8594;</div>
+        </div>
+        <!-- Fila 2: Nuevas Inc + Designación (grande) + IA -->
+        <div class="bento-card bento-inc" onclick="showPage('incorporaciones',null)">
+          <div class="bento-icon">&#10024;</div>
+          <div class="bento-title">Nuevas Incorporaciones</div>
+          <div class="bento-desc">Protocolo de acogida PRL.</div>
+          <div class="bento-arrow">&#8594;</div>
+        </div>
+        <div class="bento-card bento-des" onclick="showPage('designacion',null)">
+          <div class="bento-icon">&#127919;</div>
+          <div class="bento-title">Designación PRL</div>
+          <div class="bento-desc">Responsables y trabajadores designados.</div>
+          <div class="bento-arrow">&#8594;</div>
+        </div>
+        <div class="bento-card bento-ia" onclick="showPage('notebook',null)">
+          <div class="bento-icon">&#129504;</div>
+          <div class="bento-title">IA — Normativa</div>
+          <div class="bento-desc">Asistente IA para resumen normativa PRL.</div>
+          <div class="bento-arrow">&#8594;</div>
+        </div>
+        <!-- Fila 3: Documentación + EPIs + Organismos -->
+        <div class="bento-card bento-doc" onclick="showPage('documentos',null)">
+          <div class="bento-icon">&#128193;</div>
+          <div class="bento-title">Documentación</div>
+          <div class="bento-desc">Carpetas y repositorio PRL.</div>
+          <div class="bento-arrow">&#8594;</div>
+        </div>
+        <div class="bento-card bento-epi" onclick="showPage('equipos',null)">
+          <div class="bento-icon">&#129686;</div>
+          <div class="bento-title">Revisión EPIs</div>
+          <div class="bento-desc">Control de equipos de protección.</div>
+          <div class="bento-arrow">&#8594;</div>
+        </div>
+        <div class="bento-card bento-org" onclick="showPage('enlaces',null)">
+          <div class="bento-icon">&#128279;</div>
+          <div class="bento-title">Organismos y Normativa</div>
+          <div class="bento-desc">Accesos directos a organismos oficiales.</div>
+          <div class="bento-arrow">&#8594;</div>
+        </div>
       </div>
     </div>
 
@@ -2187,18 +2311,46 @@ var DES_ICONS=['&#128081;','&#128499;','&#128293;','&#127981;','&#128296;','&#12
 function renderDesignaciones() {
   var c=document.getElementById('des-grid');
   if(!c) return;
-  if(!designaciones.length){c.innerHTML='<div style="grid-column:1/-1;text-align:center;padding:36px;color:var(--txm)">No hay designaciones registradas.</div>';return;}
+  if(!designaciones.length){c.innerHTML='<div style="text-align:center;padding:36px;color:var(--txm)">No hay designaciones registradas.</div>';return;}
   var html='';
   for(var i=0;i<designaciones.length;i++){
     var d=designaciones[i];
     var ac=avCol(d.nombre);
     var ic=DES_ICONS[i%DES_ICONS.length];
     var vigTxt=d.vig==='vigente'?'Vigente':d.vig==='renovar'?'Renovar':'Vencida';
-    var vigCol=d.vig==='vigente'?'#00d4aa':d.vig==='renovar'?'#f7c948':'#f85149';
-    html+='<div class="descard">';
-    html+='<div class="deshdr"><div class="desicon" style="background:'+ac[0]+'">'+ic+'</div><div><div class="desrol">'+esc(d.rol)+'</div><div class="desarea">'+esc(d.area||'-')+'</div></div></div>';
-    html+='<div class="desperson"><div class="desav" style="background:'+ac[0]+';color:'+ac[1]+'">'+esc(initials(d.nombre))+'</div><div style="flex:1"><div class="desname">'+esc(d.nombre)+'</div><div class="desexp">'+esc(d.obs||'-')+'</div><div style="display:flex;gap:10px;margin-top:3px;flex-wrap:wrap">'+(d.tel?'<a href="tel:'+esc(d.tel)+'" style="font-size:10px;color:var(--acc3);text-decoration:none">&#128222; '+esc(d.tel)+'</a>':'')+(d.email?'<a href="mailto:'+esc(d.email)+'" style="font-size:10px;color:var(--acc);text-decoration:none">&#9993; '+esc(d.email)+'</a>':'')+'</div></div><div class="desvalid" style="color:'+vigCol+'">'+vigTxt+'</div></div>';
-    html+='<div class="desfooter"><button class="btn btn-sm btn-e" onclick="openModal(\'designacion\',\''+d.id+'\')">Editar</button><button class="btn btn-sm btn-d" onclick="delDesignacion(\''+d.id+'\')">Borrar</button></div>';
+    var vigCol=d.vig==='vigente'?'var(--acc)':d.vig==='renovar'?'var(--acc4)':'var(--danger)';
+    var vigBg=d.vig==='vigente'?'rgba(0,212,255,.1)':d.vig==='renovar'?'rgba(247,201,72,.1)':'rgba(255,77,109,.1)';
+    var vigBorder=d.vig==='vigente'?'rgba(0,212,255,.25)':d.vig==='renovar'?'rgba(247,201,72,.25)':'rgba(255,77,109,.25)';
+
+    html+='<div style="background:linear-gradient(135deg,rgba(13,19,48,.95),rgba(17,26,62,.8));border:1px solid rgba(28,42,94,.8);border-radius:18px;overflow:hidden;margin-bottom:16px;transition:border-color .2s;" onmouseover="this.style.borderColor=\'rgba(123,111,255,.4)\'" onmouseout="this.style.borderColor=\'rgba(28,42,94,.8)\'">';
+
+    // Header band — rol + area
+    html+='<div style="background:rgba(7,11,26,.5);border-bottom:1px solid rgba(28,42,94,.6);padding:14px 18px;display:flex;align-items:center;gap:12px;">';
+    html+='<div style="width:38px;height:38px;border-radius:10px;background:'+ac[0]+';color:'+ac[1]+';display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">'+ic+'</div>';
+    html+='<div style="flex:1;min-width:0;">';
+    html+='<div style="font-family:\'Syne\',sans-serif;font-size:15px;font-weight:700;color:var(--tx);margin-bottom:1px;">'+esc(d.rol)+'</div>';
+    html+='<div style="font-size:11px;color:var(--txm);font-style:italic;">'+esc(d.area||'-')+'</div>';
+    html+='</div>';
+    html+='<div style="flex-shrink:0;padding:4px 12px;border-radius:20px;font-size:11px;font-weight:700;background:'+vigBg+';color:'+vigCol+';border:1px solid '+vigBorder+';">'+vigTxt+'</div>';
+    html+='</div>';
+
+    // Person card
+    html+='<div style="padding:16px 18px;display:flex;align-items:center;gap:14px;">';
+    html+='<div style="width:44px;height:44px;border-radius:50%;background:'+ac[0]+';color:'+ac[1]+';display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;flex-shrink:0;border:2px solid rgba(28,42,94,.8);">'+esc(initials(d.nombre))+'</div>';
+    html+='<div style="flex:1;min-width:0;">';
+    html+='<div style="font-size:15px;font-weight:600;color:var(--tx);margin-bottom:3px;">'+esc(d.nombre)+'</div>';
+    html+='<div style="font-size:12px;color:var(--txm);margin-bottom:6px;">'+esc(d.obs||'')+'</div>';
+    html+='<div style="display:flex;gap:14px;flex-wrap:wrap;">';
+    if(d.tel) html+='<a href="tel:'+esc(d.tel)+'" style="display:flex;align-items:center;gap:4px;font-size:11px;color:var(--acc3);text-decoration:none;">&#128222; '+esc(d.tel)+'</a>';
+    if(d.email) html+='<a href="mailto:'+esc(d.email)+'" style="display:flex;align-items:center;gap:4px;font-size:11px;color:var(--acc);text-decoration:none;">&#9993; '+esc(d.email)+'</a>';
+    html+='</div></div>';
+    html+='</div>';
+
+    // Actions
+    html+='<div style="padding:0 18px 14px 18px;display:flex;justify-content:flex-end;gap:8px;">';
+    html+='<button class="btn btn-sm btn-e" onclick="openModal(\'designacion\',\''+d.id+'\')">Editar</button>';
+    html+='<button class="btn btn-sm btn-d" onclick="delDesignacion(\''+d.id+'\')">Borrar</button>';
+    html+='</div>';
     html+='</div>';
   }
   c.innerHTML=html;
