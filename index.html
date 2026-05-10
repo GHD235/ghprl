@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>GHDPRL</title>
+<!-- Capa 4: Content Security Policy — bloquea scripts externos no autorizados -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self' https://fonts.googleapis.com https://fonts.gstatic.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://*.firebasedatabase.app; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com;">
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
 :root{--bg:#0d1117;--sur:#161b22;--sur2:#1c2230;--brd:#2a3547;--acc:#00d4aa;--acc2:#ff6b35;--acc3:#5b8dee;--acc4:#f7c948;--tx:#e6edf3;--txm:#7d8fa8;--danger:#f85149;}
@@ -1109,10 +1111,13 @@ var FORM_REQ = {
 };
 // Formaciones voluntarias (azul)
 var FORM_VOL   = {'CONFINADOS':true};
-// Formaciones "básico" — reborde rojo
-var FORM_BASICO = {'2°ELECTRICIDAD':true,'2°ALBANILERIA':true};
-// Formaciones adicionales según puesto
-var FORM_PUESTO = {'OBRA CIVIL':['2°ALBANILERIA']};
+// Formaciones "básico" — reborde rojo (obligatorio para el trabajo)
+var FORM_BASICO = {'60h PRL':true,'2°ELECTRICIDAD':true,'2°ALBANILERIA':true};
+// Formaciones adicionales según puesto — siempre se añaden independientemente de caps
+var FORM_PUESTO = {
+  'OBRA CIVIL': ['60h PRL','2°ALBANILERIA'],
+  'ELECTRICO':  ['60h PRL','2°ELECTRICIDAD']
+};
 
 // Formaciones completadas por trabajador: { trabajadorId: { 'FORMACION': true, ... } }
 var formCompletadas = {};
@@ -1122,7 +1127,15 @@ function toggleFormCompletada(trabId, formKey) {
   if(!formCompletadas[trabId]) formCompletadas[trabId]={};
   if(formCompletadas[trabId][formKey]) delete formCompletadas[trabId][formKey];
   else formCompletadas[trabId][formKey]=true;
-  saveAll(); // guarda todo incluyendo formCompletadas
+  // Auto-update worker form state based on completions
+  var t=findById(trabajadores,trabId);
+  if(t){
+    var reqs=getFormReq(t.caps||[],t.puesto);
+    var allDone=reqs.length>0 && reqs.every(function(r){return formCompletadas[trabId]&&formCompletadas[trabId][r];});
+    if(allDone && t.form!=='ok'){ t.form='ok'; updateById(trabajadores,trabId,{form:'ok'}); }
+    else if(!allDone && t.form==='ok'){ t.form='pendiente'; updateById(trabajadores,trabId,{form:'pendiente'}); }
+  }
+  saveAll();
   renderFormPendientes();
   renderTrabajadores();
 }
@@ -1624,6 +1637,7 @@ function saveTrabajador() {
     saveAll();
   }
   closeModal('trabajador');renderAll();
+  // Badge update happens inside renderFormPendientes which renderAll calls
 }
 
 function saveFormacion() {
@@ -1951,10 +1965,23 @@ function toggleFormacion(id) {
 function renderFormaciones() {
   var c=document.getElementById('form-list');
   if(!c) return;
-  if(!formaciones.length){c.innerHTML='<div style="text-align:center;padding:36px;color:var(--txm)">No hay formaciones. Pulsa + Nueva formacion.</div>';return;}
-  var html='';
+
+  // Separa formaciones por estado automático
+  var programadas=[], encurso=[], finalizadas=[];
   for(var i=0;i<formaciones.length;i++){
     var f=formaciones[i];
+    var est=calcEstadoAuto({fecha:f.fecha,dias:parseInt(f.dias||1),estado:f.estado||'aprobada'});
+    if(est==='cerrada') finalizadas.push(f);
+    else if(est==='encurso') encurso.push(f);
+    else programadas.push(f);
+  }
+
+  if(!formaciones.length){
+    c.innerHTML='<div style="text-align:center;padding:36px;color:var(--txm)">No hay formaciones. Pulsa + Nueva formaci\u00f3n.</div>';
+    renderFormPendientes(); return;
+  }
+
+  function buildFormCard(f){
     var dt=new Date(f.fecha+'T12:00:00');
     var dia=dt.getDate();
     var mes=dt.toLocaleDateString('es-ES',{month:'short'}).replace('.','');
@@ -1962,14 +1989,10 @@ function renderFormaciones() {
     var acc=TACC[f.tipo]||'#5b8dee';
     var lbl=TLBL[f.tipo]||f.tipo;
     var bdg=TBDG[f.tipo]||'vo';
-    var tipoFull=f.tipo==='obligatorio'?'Obligatoria':f.tipo==='voluntaria'?'Voluntaria':'Anual/Recurrente';
-    // Build attendee info grouped by encargado
-    var asistHtml='';
     var ids=f.asistIds||[];
+    var asistHtml='';
     if(ids.length>0){
-      // Group by encargado (dept field)
-      var groups={};   // encargado → [trabajador, ...]
-      var ORDER=[];    // preserve insertion order of encargados
+      var groups={},ORDER=[];
       for(var j=0;j<ids.length;j++){
         var tw=findById(trabajadores,ids[j]);
         if(!tw) continue;
@@ -1996,51 +2019,63 @@ function renderFormaciones() {
     } else {
       asistHtml='<span style="color:var(--txm);font-size:12px">'+(f.asistTxt||'Sin asistentes asignados')+'</span>';
     }
-    // Auto-state badge — usa el estado real del objeto, nunca hardcoded
-    var estAuto = calcEstadoAuto({fecha:f.fecha, dias:parseInt(f.dias||1), estado:f.estado||'aprobada'});
+    var estAuto=calcEstadoAuto({fecha:f.fecha,dias:parseInt(f.dias||1),estado:f.estado||'aprobada'});
     var estLabels={solicitada:'Por confirmar',aprobada:'Programada',encurso:'En curso',cerrada:'Cerrada'};
     var estCols={solicitada:'#7d8fa8',aprobada:'#5b8dee',encurso:'#f7c948',cerrada:'#00d4aa'};
     var estBadge='<span style="background:'+estCols[estAuto]+';color:#0d1117;padding:2px 8px;border-radius:10px;font-size:9px;font-weight:700;margin-left:6px">'+(estLabels[estAuto]||'')+'</span>';
-
-    html+='<div style="background:var(--sur);border:1px solid var(--brd);border-radius:11px;overflow:hidden;">';
-    html+='<div class="evitem" onclick="toggleFormacion(\''+f.id+'\')" style="padding:13px 16px;display:flex;align-items:center;gap:12px;border-radius:0">';
-    html+='<div class="evdate"><div class="evday" style="color:'+acc+'">'+dia+'</div><div class="evmon">'+esc(mes)+'</div></div>';
-    html+='<div class="evbar '+col+'"></div>';
-    html+='<div class="evinfo"><div class="evtitle">'+esc(f.titulo)+' '+estBadge+' <span class="evchev" id="chev-'+f.id+'">&#9660;</span></div><div class="evmeta">'+esc(f.lugar)+' &middot; '+esc(f.hora)+(f.dias>1?' &middot; '+f.dias+' d&#237;as':'')+'</div></div>';
-    html+='<span class="evbadge '+bdg+'">'+lbl+'</span>';
-    html+='<div class="abts" style="margin-left:8px" onclick="event.stopPropagation()">';
-    html+='<button class="btn btn-sm btn-e" onclick="openModal(\'formacion\',\''+f.id+'\')">Editar</button>';
-    html+='<button class="btn btn-sm btn-d" onclick="delFormacion(\''+f.id+'\')">Borrar</button>';
-    html+='</div></div>';
-    html+='<div class="evdrop" id="drop-'+f.id+'" style="padding:0 16px 14px 16px">';
-    html+='<div class="evdrop-grid">';
-    // Si tiene varios días, muestra el detalle por día
-    if(f.dias && f.dias>1 && f.fechas && f.fechas.length>1){
-      var detHtml='<div style="grid-column:1/-1">';
-      detHtml+='<div class="evdrop-lbl" style="margin-bottom:6px">Detalle por d&#237;a</div>';
-      for(var dd=0; dd<f.fechas.length; dd++){
-        var ff=f.fechas[dd]||f.fecha, hh=(f.horarios&&f.horarios[dd])||f.hora, ll=(f.lugares&&f.lugares[dd])||f.lugar;
-        detHtml+='<div style="display:grid;grid-template-columns:80px 1fr 1fr;gap:8px;padding:6px 8px;background:var(--bg);border-radius:6px;margin-bottom:4px;font-size:11px">';
-        detHtml+='<div><strong>D&#237;a '+(dd+1)+'</strong></div>';
-        detHtml+='<div>&#128197; '+fmtDate(ff)+' &middot; '+esc(hh)+'</div>';
-        detHtml+='<div>&#128205; '+esc(ll)+'</div>';
-        detHtml+='</div>';
+    var h='<div style="background:var(--sur);border:1px solid var(--brd);border-radius:11px;overflow:hidden;">';
+    h+='<div class="evitem" onclick="toggleFormacion(\''+f.id+'\')" style="padding:13px 16px;display:flex;align-items:center;gap:12px;border-radius:0">';
+    h+='<div class="evdate"><div class="evday" style="color:'+acc+'">'+dia+'</div><div class="evmon">'+esc(mes)+'</div></div>';
+    h+='<div class="evbar '+col+'"></div>';
+    h+='<div class="evinfo"><div class="evtitle">'+esc(f.titulo)+' '+estBadge+' <span class="evchev" id="chev-'+f.id+'">&#9660;</span></div><div class="evmeta">'+esc(f.lugar||'-')+' &middot; '+esc(f.hora||'-')+(f.dias>1?' &middot; '+f.dias+' d\u00edas':'')+'</div></div>';
+    h+='<span class="evbadge '+bdg+'">'+lbl+'</span>';
+    h+='<div class="abts" style="margin-left:8px" onclick="event.stopPropagation()">';
+    h+='<button class="btn btn-sm btn-e" onclick="openModal(\'formacion\',\''+f.id+'\')">Editar</button>';
+    h+='<button class="btn btn-sm btn-d" onclick="delFormacion(\''+f.id+'\')">Borrar</button>';
+    h+='</div></div>';
+    h+='<div class="evdrop" id="drop-'+f.id+'" style="padding:0 16px 14px 16px">';
+    h+='<div class="evdrop-grid">';
+    if(f.dias&&f.dias>1&&f.fechas&&f.fechas.length>1){
+      for(var d=0;d<f.dias;d++){
+        var fd=f.fechas[d]||f.fecha,fh=f.horarios&&f.horarios[d]?f.horarios[d]:(f.hora||'-'),fl=f.lugares&&f.lugares[d]?f.lugares[d]:(f.lugar||'-');
+        var fdFmt=fd?new Date(fd+'T12:00:00').toLocaleDateString('es-ES',{weekday:'short',day:'numeric',month:'short'}):'-';
+        h+='<div style="background:var(--sur2);border-radius:8px;padding:8px 10px;border:1px solid var(--brd)">';
+        h+='<div style="font-size:9px;font-weight:700;color:var(--acc3);text-transform:uppercase;margin-bottom:4px">D\u00eda '+(d+1)+'</div>';
+        h+='<div style="font-size:11px">&#128197; '+fdFmt+'</div>';
+        h+='<div style="font-size:11px">&#8987; '+fh+'</div>';
+        h+='<div style="font-size:11px">&#128205; '+esc(fl)+'</div>';
+        h+='</div>';
       }
-      detHtml+='</div>';
-      html+=detHtml;
     } else {
-      html+='<div class="evdrop-item"><div class="evdrop-lbl">Fecha</div><div class="evdrop-val">'+fmtDate(f.fecha)+'</div></div>';
-      html+='<div class="evdrop-item"><div class="evdrop-lbl">Horario</div><div class="evdrop-val">'+esc(f.hora)+'</div></div>';
-      html+='<div class="evdrop-item"><div class="evdrop-lbl">Lugar</div><div class="evdrop-val">'+esc(f.lugar)+'</div></div>';
+      var fdFmt2=f.fecha?new Date(f.fecha+'T12:00:00').toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long',year:'numeric'}):'-';
+      h+='<div><div style="font-size:10px;color:var(--txm)">Fecha</div><div style="font-size:13px;font-weight:500">'+fdFmt2+'</div></div>';
+      h+='<div><div style="font-size:10px;color:var(--txm)">Horario</div><div style="font-size:13px;font-weight:500">'+(f.hora||'Por confirmar')+'</div></div>';
+      h+='<div><div style="font-size:10px;color:var(--txm)">Lugar</div><div style="font-size:13px;font-weight:500">'+(f.lugar||'Por confirmar')+'</div></div>';
+      h+='<div><div style="font-size:10px;color:var(--txm)">Tipo</div><div style="font-size:13px;font-weight:500">'+(f.tipo==='obligatorio'?'Obligatoria':f.tipo==='voluntaria'?'Voluntaria':'Anual')+'</div></div>';
     }
-    html+='<div class="evdrop-item"><div class="evdrop-lbl">Tipo</div><div class="evdrop-val">'+tipoFull+'</div></div>';
-    html+='<div class="evdrop-item" style="grid-column:1/-1"><div class="evdrop-lbl">Asistentes por encargado</div><div class="evdrop-val">'+asistHtml+'</div></div>';
-    html+='</div></div>';
-    html+='</div>';
+    h+='</div>';
+    if(asistHtml){h+='<div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--brd)"><div style="font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--txm);margin-bottom:8px">Asistentes por encargado</div>'+asistHtml+'</div>';}
+    h+='</div></div>';
+    return h;
   }
+
+  function sectionHtml(title, icon, items, emptyMsg, accentColor){
+    var h='<div style="margin-bottom:24px">';
+    h+='<div style="font-family:\'Syne\',sans-serif;font-size:14px;font-weight:700;margin-bottom:10px;display:flex;align-items:center;gap:8px;color:'+accentColor+'">'+icon+' '+title+'<span style="font-size:11px;font-weight:400;color:var(--txm)">('+items.length+')</span></div>';
+    if(!items.length){ h+='<div style="padding:12px 16px;background:var(--sur);border:1px dashed var(--brd);border-radius:9px;color:var(--txm);font-size:12px">'+emptyMsg+'</div>'; }
+    else { for(var i=0;i<items.length;i++) h+=buildFormCard(items[i]); }
+    h+='</div>';
+    return h;
+  }
+
+  var html='';
+  html+=sectionHtml('Formaciones activas','&#9654;&#65039;',encurso,'Ninguna formaci\u00f3n en curso ahora mismo.','#f7c948');
+  html+=sectionHtml('Pr\u00f3ximas formaciones','&#128197;',programadas,'Sin formaciones programadas. Pulsa + Nueva formaci\u00f3n.','#5b8dee');
+  html+=sectionHtml('Formaciones finalizadas','&#9989;',finalizadas,'Sin formaciones finalizadas.','#00d4aa');
+
   c.innerHTML=html;
   renderFormPendientes();
-}
+};
 
 // ── RENDER CALENDARIO ─────────────────────────────────────────
 function changeMonth(d) { calM+=d; if(calM>11){calM=0;calY++;} if(calM<0){calM=11;calY--;} renderCalendario(); }
@@ -2235,8 +2270,17 @@ function renderIncorporaciones() {
 // ── RENDER DASHBOARD ──────────────────────────────────────────
 function renderDashboard() {
   var total=trabajadores.length;
+
+  // Cobertura real: trabajador OK solo si formaciones AL DÍA y EPIs no pendientes
+  function coberturaOK(t){
+    if(estadoT(t).cls!=='ok') return false; // formaciones pendientes/vencidas
+    var episPend = !t.epis || t.epis.trim()==='' || t.epis==='Pendientes' || t.epis==='-';
+    if(episPend) return false; // EPIs sin asignar
+    return true;
+  }
+
   var alDia=0;
-  for(var i=0;i<trabajadores.length;i++) if(estadoT(trabajadores[i]).cls==='ok') alDia++;
+  for(var i=0;i<trabajadores.length;i++) if(coberturaOK(trabajadores[i])) alDia++;
   var pct=total>0?Math.round(alDia/total*100):0;
   var proxForm=0;
   for(var i=0;i<formaciones.length;i++) if(new Date(formaciones[i].fecha+'T12:00:00')>=new Date()) proxForm++;
@@ -2251,31 +2295,36 @@ function renderDashboard() {
   if(elC) elC.textContent=proxForm;
 
   var depts={};
-  var sinEnc={total:0, lista:[]};
+  var sinEnc={total:0,lista:[]};
   for(var i=0;i<trabajadores.length;i++){
     var dep=trabajadores[i].dept;
-    if(!dep || dep.trim()===''){
-      sinEnc.total++;
-      sinEnc.lista.push(trabajadores[i]);
-      continue;
-    }
-    if(!depts[dep]) depts[dep]={total:0,ok:0};
+    if(!dep||dep.trim()===''){sinEnc.total++;sinEnc.lista.push(trabajadores[i]);continue;}
+    if(!depts[dep]) depts[dep]={total:0,ok:0,pendForm:0,pendEpi:0};
     depts[dep].total++;
-    if(estadoT(trabajadores[i]).cls==='ok') depts[dep].ok++;
+    if(coberturaOK(trabajadores[i])) depts[dep].ok++;
+    if(estadoT(trabajadores[i]).cls!=='ok') depts[dep].pendForm++;
+    var ep=trabajadores[i].epis;
+    if(!ep||ep.trim()===''||ep==='Pendientes'||ep==='-') depts[dep].pendEpi++;
   }
   var dc=document.getElementById('dash-depts');
   if(dc){
     var html='';
     for(var dep in depts){
-      var p=Math.round(depts[dep].ok/depts[dep].total*100);
+      var d=depts[dep];
+      var p=Math.round(d.ok/d.total*100);
       var bc=p>=90?'#00d4aa':p>=60?'#5b8dee':p>=40?'#f7c948':'#f85149';
-      html+='<div class="pbar-wrap"><div class="pbar-hdr"><span>'+esc(dep)+'</span><span style="color:var(--txm);font-size:11px">'+p+'%</span></div><div class="pbar"><div class="pbar-fill" style="width:'+p+'%;background:'+bc+'"></div></div></div>';
+      var det='';
+      if(d.pendForm>0) det+='<span style="font-size:9px;color:#f7c948">&#9888; '+d.pendForm+' form.</span> ';
+      if(d.pendEpi>0)  det+='<span style="font-size:9px;color:#f85149">&#129686; '+d.pendEpi+' EPIs</span>';
+      html+='<div class="pbar-wrap">';
+      html+='<div class="pbar-hdr"><span>'+esc(dep)+'</span><span style="color:var(--txm);font-size:11px">'+p+'%'+( det?' &nbsp;'+det:'')+'</span></div>';
+      html+='<div class="pbar"><div class="pbar-fill" style="width:'+p+'%;background:'+bc+'"></div></div>';
+      html+='</div>';
     }
-    // Trabajadores sin encargado → mostrar como "Responsables" sin %
     if(sinEnc.total>0){
       html+='<div class="pbar-wrap"><div class="pbar-hdr"><span>Responsables</span><span style="color:var(--txm);font-size:11px">'+sinEnc.total+' trab.</span></div><div class="pbar"><div class="pbar-fill" style="width:100%;background:#7d8fa8"></div></div></div>';
     }
-    dc.innerHTML=html||'<div style="text-align:center;padding:16px;color:var(--txm);font-size:11px">Anade trabajadores para ver estadisticas.</div>';
+    dc.innerHTML=html||'<div style="text-align:center;padding:16px;color:var(--txm);font-size:11px">A\u00f1ade trabajadores para ver estadisticas.</div>';
   }
 
   var ac=document.getElementById('dash-act');
@@ -2537,6 +2586,15 @@ function delProtocolo(id){
   });
 }
 
+function moverProtocolo(id, dir){
+  var idx=protocolo.findIndex ? protocolo.findIndex(function(p){return p.id===id;}) : -1;
+  if(idx<0) for(var i=0;i<protocolo.length;i++) if(protocolo[i].id===id){idx=i;break;}
+  var newIdx=idx+dir;
+  if(newIdx<0||newIdx>=protocolo.length) return;
+  var tmp=protocolo[idx]; protocolo[idx]=protocolo[newIdx]; protocolo[newIdx]=tmp;
+  saveAll(); renderProtocolo();
+}
+
 function renderProtocolo(){
   var c=document.getElementById('protocolo-list');
   if(!c) return;
@@ -2544,14 +2602,23 @@ function renderProtocolo(){
   for(var i=0;i<protocolo.length;i++){
     var p=protocolo[i];
     var hasUrl=!!p.url;
-    html+='<div style="display:flex;align-items:center;gap:14px;padding:14px 16px;background:var(--sur2);border-radius:11px;border:1px solid var(--brd);transition:border-color .15s'+(hasUrl?';cursor:pointer':'')+'"'
-      +(hasUrl?' onclick="window.open(\''+esc(p.url)+'\',\'_blank\')"':'')+' onmouseover="if(this.onclick)this.style.borderColor=\'var(--acc3)\'" onmouseout="this.style.borderColor=\'var(--brd)\'">';
-    html+='<div style="width:44px;height:44px;border-radius:10px;background:rgba(91,141,238,.12);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0">'+p.icon+'</div>';
+    html+='<div style="display:flex;align-items:center;gap:10px;padding:12px 14px;background:var(--sur2);border-radius:11px;border:1px solid var(--brd)">';
+    // Flechas de orden
+    html+='<div style="display:flex;flex-direction:column;gap:2px;flex-shrink:0" onclick="event.stopPropagation()">';
+    html+='<button class="btn btn-sm" style="padding:1px 5px;font-size:10px;'+(i===0?'opacity:.3;pointer-events:none':'')+'" onclick="moverProtocolo(\''+p.id+'\',-1)">&#9650;</button>';
+    html+='<button class="btn btn-sm" style="padding:1px 5px;font-size:10px;'+(i===protocolo.length-1?'opacity:.3;pointer-events:none':'')+'" onclick="moverProtocolo(\''+p.id+'\',1)">&#9660;</button>';
+    html+='</div>';
+    // Número de paso
+    html+='<div style="width:22px;height:22px;border-radius:50%;background:var(--acc3);color:#fff;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0">'+(i+1)+'</div>';
+    // Icono
+    html+='<div style="width:40px;height:40px;border-radius:9px;background:rgba(91,141,238,.12);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0'+(hasUrl?';cursor:pointer':'')+'"'+(hasUrl?' onclick="window.open(\''+esc(p.url)+'\',\'_blank\')"':'')+'>'+p.icon+'</div>';
+    // Info
     html+='<div style="flex:1;min-width:0">';
     html+='<div style="font-weight:700;font-size:13px;margin-bottom:2px">'+esc(p.titulo)+'</div>';
     html+='<div style="font-size:11px;color:var(--txm)">'+esc(p.desc)+'</div>';
-    if(hasUrl) html+='<div style="font-size:10px;color:var(--acc3);margin-top:3px">Abrir &#8594;</div>';
+    if(hasUrl) html+='<div style="font-size:10px;color:var(--acc3);margin-top:2px;cursor:pointer" onclick="window.open(\''+esc(p.url)+'\',\'_blank\')">Abrir &#8594;</div>';
     html+='</div>';
+    // Botones editar/borrar
     html+='<div style="display:flex;gap:5px;flex-shrink:0" onclick="event.stopPropagation()">';
     html+='<button class="btn btn-sm btn-e" onclick="openModalProtocolo(\''+p.id+'\')">Editar</button>';
     html+='<button class="btn btn-sm btn-d" onclick="delProtocolo(\''+p.id+'\')">Borrar</button>';
@@ -2778,24 +2845,75 @@ function renderAll() {
 
 // Elimina físicamente del DOM todos los botones de edición/creación para no-admins
 function purgeEditButtons(){
-  // Botones editar/borrar/añadir
-  var sels=['.btn-e','.btn-d','.btn-p[onclick*="openModal"]',
-    '[onclick*="openModal"]','[onclick*="openModalCarpeta"]',
-    '[onclick*="openModalSolicitud"]','[onclick*="openModalEnlace"]',
-    '[onclick*="openModalProtocolo"]','[onclick*="delTrabajador"]',
-    '[onclick*="delFormacion"]','[onclick*="delSolicitud"]',
-    '[onclick*="delCarpeta"]','[onclick*="delEnlace"]',
-    '[onclick*="delProtocolo"]','[onclick*="delEpi"]',
-    '[onclick*="delHerramienta"]','[onclick*="delDesignacion"]',
-    '[onclick*="saveTrabajador"]','[onclick*="quitarIncorporacion"]',
-    '[onclick*="changeSolEstado"]','[onclick*="toggleFormCompletada"]',
-    '[onclick*="_fromInc"]'];
+  // Selectores EXHAUSTIVOS: cubre todos los botones de acción en toda la app
+  // tanto estáticos (HTML) como dinámicos (generados por render*)
+  var sels = [
+    // Por clase CSS de acción
+    '.btn-e', '.btn-d',
+    // Botones estáticos en secciones (HTML fijo)
+    '[onclick*="openModal"]',
+    '[onclick*="openModalCarpeta"]',
+    '[onclick*="openModalSolicitud"]',
+    '[onclick*="openModalEnlace"]',
+    '[onclick*="openModalProtocolo"]',
+    // Borrados
+    '[onclick*="delTrabajador"]',
+    '[onclick*="delFormacion"]',
+    '[onclick*="delDesignacion"]',
+    '[onclick*="delDocumento"]',
+    '[onclick*="delRiesgo"]',
+    '[onclick*="delEpi"]',
+    '[onclick*="delHerramienta"]',
+    '[onclick*="delSolicitud"]',
+    '[onclick*="delCarpeta"]',
+    '[onclick*="delEnlace"]',
+    '[onclick*="delProtocolo"]',
+    // Acciones de registro
+    '[onclick*="saveTrabajador"]',
+    '[onclick*="quitarIncorporacion"]',
+    // Cambios de estado / marcado
+    '[onclick*="changeSolEstado"]',
+    '[onclick*="toggleFormCompletada"]',
+    // Botones de incorporación
+    '[onclick*="_fromInc"]',
+    '[id="btn-nueva-inc"]',
+    // Tarjeta dashed de añadir documento
+    '[onclick*="openModal(\'documento\')"]',
+    // Topbar: botón Formación
+    '.topbar [onclick*="openModal"]',
+    '.topbar [onclick*="_fromInc"]'
+  ];
+
   sels.forEach(function(sel){
     try{
-      var els=document.querySelectorAll(sel);
-      for(var i=0;i<els.length;i++) if(els[i].parentNode) els[i].parentNode.removeChild(els[i]);
+      var els = document.querySelectorAll(sel);
+      for(var i = els.length - 1; i >= 0; i--){
+        if(els[i] && els[i].parentNode) els[i].parentNode.removeChild(els[i]);
+      }
     }catch(e){}
   });
+
+  // Elimina también spans/divs con toggleFormCompletada (no son botones, son spans)
+  try{
+    var allSpans = document.querySelectorAll('span[onclick], div[onclick]');
+    for(var i = allSpans.length - 1; i >= 0; i--){
+      var attr = allSpans[i].getAttribute('onclick')||'';
+      if(attr.indexOf('toggleFormCompletada')>=0 ||
+         attr.indexOf('changeSolEstado')>=0 ||
+         attr.indexOf('openModal')>=0 ||
+         attr.indexOf('delRiesgo')>=0){
+        if(allSpans[i].parentNode) allSpans[i].parentNode.removeChild(allSpans[i]);
+      }
+    }
+  }catch(e){}
+
+  // Step icons de incorporaciones (abren el editor)
+  try{
+    var steps = document.querySelectorAll('.step[onclick]');
+    for(var i = steps.length - 1; i >= 0; i--){
+      if(steps[i].parentNode) steps[i].parentNode.removeChild(steps[i]);
+    }
+  }catch(e){}
 }
 
 // ════════════════════════════════════════════════════════════════
@@ -2809,18 +2927,117 @@ var FIREBASE_API_KEY = 'AIzaSyDBFpXf2_nABFTzvQsFR7Z3rpd9dHjsU_8';
 // Si añades un usuario allí puede entrar. Si lo eliminas, no puede. Sin tocar código.
 
 var _authToken = '';
-var _currentUserEmail = '';  // email del usuario en sesión
+var _currentUserEmail = '';
 
-// ── EMAILS CON PERMISOS DE EDICIÓN ───────────────────────────
-// Solo estos emails pueden crear, editar y borrar registros.
-// El resto de usuarios podrán consultar pero no modificar nada.
-var ADMIN_EMAILS = [
-  'guilleherdo@gmail.com'
-];
+// ════════════════════════════════════════════════════════════════
+// ── SEGURIDAD — 6 CAPAS ───────────────────────────────────────
+// ════════════════════════════════════════════════════════════════
 
-function isAdmin(){
-  return ADMIN_EMAILS.some(function(e){ return e.toLowerCase()===_currentUserEmail.toLowerCase(); });
+// Capa 5: Anti-clickjacking — impide carga en iframes
+if(window.self !== window.top){ window.top.location = window.self.location; }
+
+// ── Admins con permisos de edición ───────────────────────────
+var ADMIN_EMAILS = ['guilleherdo@gmail.com'];
+function isAdmin(){ return ADMIN_EMAILS.some(function(e){ return e.toLowerCase()===_currentUserEmail.toLowerCase(); }); }
+
+// ── Capa 2: Control de intentos de login ─────────────────────
+var LOGIN_ATTEMPTS_KEY = 'ghdprl_attempts';
+var MAX_ATTEMPTS = 3; // 3 intentos → bloqueo permanente hasta que admin desbloquee
+
+function getAttempts(){
+  try{ return JSON.parse(localStorage.getItem(LOGIN_ATTEMPTS_KEY)||'{"count":0,"blocked":false,"email":""}'); }
+  catch(e){ return {count:0,blocked:false,email:''}; }
 }
+function saveAttempts(obj){ localStorage.setItem(LOGIN_ATTEMPTS_KEY, JSON.stringify(obj)); }
+function isBlocked(email){
+  var a=getAttempts();
+  return a.blocked && a.email.toLowerCase()===email.toLowerCase();
+}
+function registerFailedAttempt(email){
+  var a=getAttempts();
+  if(a.email.toLowerCase()!==email.toLowerCase()){ a={count:0,blocked:false,email:email}; }
+  a.count++;
+  if(a.count>=MAX_ATTEMPTS){ a.blocked=true; }
+  saveAttempts(a);
+  return a;
+}
+function registerSuccessLogin(email){
+  saveAttempts({count:0,blocked:false,email:email}); // limpia intentos
+}
+// Para desbloquear un usuario: llamar a unlockUser(email) desde consola del navegador
+// o borrar manualmente localStorage 'ghdprl_attempts' en el navegador del usuario
+function unlockUser(email){
+  var a=getAttempts();
+  if(a.email.toLowerCase()===email.toLowerCase()){
+    saveAttempts({count:0,blocked:false,email:email});
+    console.log('[GHDPRL] Usuario desbloqueado: '+email);
+  }
+}
+
+// ── Capa 1: Inactividad 45 min ────────────────────────────────
+var _inactivityTimer = null;
+var INACTIVITY_MS = 45 * 60 * 1000; // 45 minutos
+
+function resetInactivityTimer(){
+  clearTimeout(_inactivityTimer);
+  _inactivityTimer = setTimeout(function(){
+    if(_currentUserEmail){
+      logAccess('logout_inactividad');
+      sessionStorage.removeItem(AUTH_STORAGE_KEY);
+      _authToken=''; _currentUserEmail='';
+      showLoginScreen();
+      // Muestra aviso
+      var el=document.getElementById('login-err');
+      if(el) el.textContent='Sesión cerrada por inactividad (45 min). Vuelve a iniciar sesión.';
+    }
+  }, INACTIVITY_MS);
+}
+
+function startInactivityWatch(){
+  ['mousemove','keydown','click','touchstart','scroll'].forEach(function(ev){
+    document.addEventListener(ev, resetInactivityTimer, {passive:true});
+  });
+  resetInactivityTimer();
+}
+
+// ── Capa 3: Caducidad de sesión 12 horas ─────────────────────
+var SESSION_MAX_MS = 12 * 60 * 60 * 1000; // 12 horas
+var _sessionExpiry = null;
+
+function startSessionExpiry(){
+  clearTimeout(_sessionExpiry);
+  _sessionExpiry = setTimeout(function(){
+    if(_currentUserEmail){
+      logAccess('logout_expiracion');
+      sessionStorage.removeItem(AUTH_STORAGE_KEY);
+      _authToken=''; _currentUserEmail='';
+      showLoginScreen();
+      var el=document.getElementById('login-err');
+      if(el) el.textContent='Sesión expirada tras 12 horas. Inicia sesión de nuevo.';
+    }
+  }, SESSION_MAX_MS);
+}
+
+// ── Capa 6: Log de accesos en Firebase ───────────────────────
+function logAccess(tipo){
+  if(!_currentUserEmail && tipo!=='login_ok' && tipo!=='login_fail') return;
+  var entry={
+    tipo:tipo,
+    email:_currentUserEmail||'desconocido',
+    ts:Date.now(),
+    fecha:new Date().toLocaleString('es-ES'),
+    ua:(navigator.userAgent||'').slice(0,80)
+  };
+  fetch(fbUrl('/accessLog/'+Date.now()+'.json'),{
+    method:'PUT',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify(entry),
+    keepalive:true
+  }).catch(function(){});
+}
+
+// ── AUTH STORAGE ──────────────────────────────────────────────
+var AUTH_STORAGE_KEY = 'ghdprl_auth';
 var _refreshToken = '';
 var AUTH_STORAGE_KEY = 'ghdprl_auth';
 
@@ -2829,6 +3046,12 @@ function checkSession(){
   try{
     var stored=JSON.parse(sessionStorage.getItem(AUTH_STORAGE_KEY)||'null');
     if(stored && stored.refreshToken && stored.email){
+      // Capa 3: Verificar que no han pasado 12 horas desde el login
+      if(stored.loginTs && (Date.now()-stored.loginTs) > SESSION_MAX_MS){
+        sessionStorage.removeItem(AUTH_STORAGE_KEY);
+        showLoginScreen();
+        return;
+      }
       refreshAuthToken(stored.refreshToken, stored.email);
       return;
     }
@@ -2865,7 +3088,15 @@ function doLogin(){
   var errEl=document.getElementById('login-err');
   var btn=document.getElementById('login-btn');
   errEl.textContent='';
-  if(!email||!pass){errEl.textContent='Introduce email y contraseña.';return;}
+  if(!email||!pass){errEl.textContent='Introduce email y contrase\u00f1a.';return;}
+
+  // Capa 2: Comprobar bloqueo por intentos fallidos
+  if(isBlocked(email)){
+    errEl.textContent='\u274C Cuenta bloqueada por m\u00faltiples intentos fallidos. Contacta con el administrador.';
+    btn.disabled=true; btn.innerHTML='Bloqueado';
+    return;
+  }
+
   btn.disabled=true;
   btn.innerHTML='<span class="login-spinner"></span>Verificando...';
   fetch('https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key='+FIREBASE_API_KEY,{
@@ -2876,24 +3107,29 @@ function doLogin(){
   .then(function(r){return r.json();})
   .then(function(data){
     if(data.idToken){
+      registerSuccessLogin(email); // limpia intentos
       _authToken=data.idToken;
       _refreshToken=data.refreshToken;
-      sessionStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify({refreshToken:data.refreshToken, email:email}));
-      // Renueva automáticamente cada 55 min
+      sessionStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify({refreshToken:data.refreshToken, email:email, loginTs:Date.now()}));
       setTimeout(function(){ refreshAuthToken(_refreshToken, email); }, 55*60*1000);
       launchApp(email);
     } else {
-      var msg='Email o contraseña incorrectos.';
-      if(data.error){
-        if(data.error.message==='EMAIL_NOT_FOUND'||data.error.message==='INVALID_PASSWORD'||data.error.message==='INVALID_LOGIN_CREDENTIALS') msg='Email o contraseña incorrectos.';
-        else if(data.error.message==='TOO_MANY_ATTEMPTS_TRY_LATER') msg='Demasiados intentos. Espera unos minutos.';
+      var att=registerFailedAttempt(email);
+      var msg='Email o contrase\u00f1a incorrectos.';
+      if(data.error && data.error.message==='TOO_MANY_ATTEMPTS_TRY_LATER') msg='Demasiados intentos. Espera unos minutos.';
+      if(att.blocked){
+        msg='\u274C Demasiados intentos fallidos. Cuenta bloqueada. Contacta con el administrador.';
+        btn.disabled=true; btn.innerHTML='Bloqueado';
+      } else {
+        var restantes=MAX_ATTEMPTS-att.count;
+        msg+=' ('+restantes+' intento'+(restantes!==1?'s':'')+' restante'+(restantes!==1?'s':'')+')';
+        btn.disabled=false; btn.innerHTML='Entrar';
       }
       errEl.textContent=msg;
-      btn.disabled=false; btn.innerHTML='Entrar';
     }
   })
   .catch(function(){
-    errEl.textContent='Error de conexión. Comprueba tu internet.';
+    errEl.textContent='Error de conexi\u00f3n. Comprueba tu internet.';
     btn.disabled=false; btn.innerHTML='Entrar';
   });
 }
@@ -2904,6 +3140,14 @@ function launchApp(email){
   document.getElementById('login-screen').style.display='none';
   document.getElementById('app-wrapper').style.display='block';
   var admin = isAdmin();
+
+  // Capa 1: Inactividad 45 min
+  startInactivityWatch();
+  // Capa 3: Expiración de sesión 12 horas
+  startSessionExpiry();
+  // Capa 6: Log de acceso
+  logAccess('login_ok');
+
   // Botón de sesión en sidebar
   var signoutBtn=document.createElement('div');
   signoutBtn.style.cssText='padding:12px 18px;border-top:1px solid var(--brd);font-size:11px;color:var(--txm);cursor:pointer;display:flex;align-items:center;gap:8px;';
@@ -2914,24 +3158,32 @@ function launchApp(email){
   signoutBtn.onclick=doLogout;
   var sidebar=document.querySelector('.sidebar');
   if(sidebar) sidebar.appendChild(signoutBtn);
-  // Si no es admin, aviso visual de modo consulta
+
   if(!admin){
     var banner=document.createElement('div');
     banner.style.cssText='position:fixed;bottom:0;left:0;right:0;background:rgba(91,141,238,.12);border-top:1px solid rgba(91,141,238,.3);padding:7px 16px;font-size:11px;color:#5b8dee;z-index:500;text-align:center;';
     banner.innerHTML='&#128274; Modo consulta &mdash; solo lectura. Contacta con el administrador para realizar cambios.';
     document.body.appendChild(banner);
-  }
-  // Si no es admin, inyecta CSS que oculta botones de acción del topbar
-  if(!admin){
     var style=document.createElement('style');
     style.textContent=
+      // Topbar action buttons
       '#btn-nueva-inc{display:none!important}'+
-      '.topbar .btn-p[onclick*="openModal"]{display:none!important}'+
-      '.topbar .btn-g[onclick*="openModal"]{display:none!important}'+
-      '.topbar .btn[onclick*="_fromInc"]{display:none!important}'+
-      // Cursor pointer eliminado en elementos interactivos de solo consulta
-      '[onclick*="toggleFormCompletada"]{cursor:default!important;pointer-events:none!important}'+
-      '[onclick*="changeSolEstado"]{cursor:default!important;pointer-events:none!important}';
+      // All btn-p/btn-g with openModal in onclick
+      'button[onclick*="openModal"]{display:none!important}'+
+      'button[onclick*="openModalCarpeta"]{display:none!important}'+
+      'button[onclick*="openModalSolicitud"]{display:none!important}'+
+      'button[onclick*="openModalEnlace"]{display:none!important}'+
+      'button[onclick*="openModalProtocolo"]{display:none!important}'+
+      'button[onclick*="_fromInc"]{display:none!important}'+
+      // Interactive spans/divs
+      'span[onclick*="toggleFormCompletada"]{cursor:default!important;pointer-events:none!important;opacity:.5!important}'+
+      'span[onclick*="changeSolEstado"]{cursor:default!important;pointer-events:none!important}'+
+      '.step[onclick]{cursor:default!important;pointer-events:none!important}'+
+      // Dashed add document card
+      'div[onclick*="openModal"]{display:none!important}'+
+      // Edit/delete btn classes
+      '.btn-e{display:none!important}'+
+      '.btn-d{display:none!important}';
     document.head.appendChild(style);
   }
   initDB();
@@ -2939,9 +3191,12 @@ function launchApp(email){
 
 // Cierra sesión
 function doLogout(){
-  showConfirm('¿Cerrar sesión?', function(){
+  showConfirm('\u00bfCerrar sesi\u00f3n?', function(){
+    logAccess('logout_manual');
+    clearTimeout(_inactivityTimer);
+    clearTimeout(_sessionExpiry);
     sessionStorage.removeItem(AUTH_STORAGE_KEY);
-    _authToken=''; _refreshToken='';
+    _authToken=''; _refreshToken=''; _currentUserEmail='';
     location.reload();
   });
 }
