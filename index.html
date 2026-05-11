@@ -148,38 +148,51 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);min-h
 .calwrap{background:linear-gradient(135deg,rgba(13,19,60,.95),rgba(17,26,72,.8));border:1px solid rgba(28,42,110,.7);border-radius:24px;padding:22px;margin-bottom:24px;}
 
 /* ── BENTO GRID — ACCESOS DIRECTOS ──────────────────────────── */
-.bento-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:28px;}
-.bento-card{border-radius:24px;padding:22px 20px;cursor:pointer;transition:all .25s;display:flex;flex-direction:column;gap:8px;min-height:140px;position:relative;overflow:hidden;}
-.bento-card::after{content:'';position:absolute;bottom:-30px;right:-30px;width:90px;height:90px;border-radius:50%;background:rgba(255,255,255,.04);}
-.bento-card:hover{transform:translateY(-5px);box-shadow:0 16px 40px rgba(0,0,0,.45);}
-.bento-icon{font-size:26px;line-height:1;}
-.bento-title{font-family:'Syne',sans-serif;font-size:14px;font-weight:700;color:#fff;line-height:1.3;}
+/* ── BENTO GRID ──────────────────────────────────────────────── */
+.bento-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:14px;margin-bottom:28px;}
+.bento-card{border-radius:24px;padding:22px 20px;cursor:pointer;transition:all .25s;display:flex;flex-direction:column;gap:8px;min-height:140px;position:relative;overflow:hidden;grid-column:span 2;}
+.bento-card::before{content:'';position:absolute;top:-30px;right:-30px;width:110px;height:110px;border-radius:50%;background:rgba(255,255,255,.04);pointer-events:none;}
+.bento-card::after{content:'';position:absolute;bottom:-20px;left:-20px;width:70px;height:70px;border-radius:50%;background:rgba(255,255,255,.03);pointer-events:none;}
+.bento-card:hover{transform:translateY(-5px);box-shadow:0 18px 44px rgba(0,0,0,.5);}
+.bento-wide{grid-column:span 4;}
+.bento-icon{font-size:28px;line-height:1;}
+.bento-title{font-family:'Syne',sans-serif;font-size:15px;font-weight:700;color:#fff;line-height:1.3;}
 .bento-desc{font-size:11px;color:rgba(255,255,255,.5);line-height:1.5;flex:1;}
-.bento-arrow{font-size:16px;color:rgba(255,255,255,.3);margin-top:4px;transition:color .2s;}
-.bento-card:hover .bento-arrow{color:rgba(255,255,255,.75);}
-.bento-cal{background:linear-gradient(135deg,#0f2a5c,#1a3a8a);border:1px solid rgba(0,212,255,.25);}
-.bento-pend{background:linear-gradient(135deg,#2a1500,#4a2800);border:1px solid rgba(247,201,72,.25);}
-.bento-trab{background:linear-gradient(135deg,#0a2a1a,#0f4030);border:1px solid rgba(0,212,170,.25);}
-.bento-inc{background:linear-gradient(135deg,#1a0a2e,#2d1460);border:1px solid rgba(163,113,247,.3);}
-.bento-des{background:linear-gradient(135deg,#2a0a10,#4a0e18);border:1px solid rgba(255,77,109,.25);}
-.bento-ia{background:linear-gradient(135deg,#0a1f3a,#112d5a);border:1px solid rgba(91,141,238,.3);}
-.bento-doc{background:linear-gradient(135deg,#1a1500,#302800);border:1px solid rgba(247,201,72,.2);}
-.bento-epi{background:linear-gradient(135deg,#0a2820,#0e3a2e);border:1px solid rgba(0,212,255,.2);}
-.bento-org{background:linear-gradient(135deg,#1a0e2e,#2a1650);border:1px solid rgba(123,111,255,.25);}
-.bento-cal:hover{border-color:rgba(0,212,255,.5);box-shadow:0 16px 40px rgba(0,100,255,.2);}
-.bento-pend:hover{border-color:rgba(247,201,72,.5);box-shadow:0 16px 40px rgba(200,130,0,.15);}
-.bento-trab:hover{border-color:rgba(0,212,170,.5);box-shadow:0 16px 40px rgba(0,170,120,.15);}
-.bento-inc:hover{border-color:rgba(163,113,247,.6);box-shadow:0 16px 40px rgba(120,70,220,.2);}
-.bento-des:hover{border-color:rgba(255,77,109,.5);box-shadow:0 16px 40px rgba(200,30,60,.15);}
-.bento-ia:hover{border-color:rgba(91,141,238,.6);box-shadow:0 16px 40px rgba(50,100,220,.2);}
-.bento-doc:hover{border-color:rgba(247,201,72,.4);box-shadow:0 16px 40px rgba(180,130,0,.12);}
-.bento-epi:hover{border-color:rgba(0,212,255,.45);box-shadow:0 16px 40px rgba(0,170,170,.12);}
-.bento-org:hover{border-color:rgba(123,111,255,.5);box-shadow:0 16px 40px rgba(90,70,200,.15);}
+.bento-arrow{font-size:18px;color:rgba(255,255,255,.25);margin-top:4px;transition:color .2s;align-self:flex-end;}
+.bento-card:hover .bento-arrow{color:rgba(255,255,255,.8);}
+.bento-cal{background:linear-gradient(135deg,#0d265e,#1640a0);border:1px solid rgba(0,212,255,.3);}
+.bento-pend{background:linear-gradient(135deg,#3a1800,#5c2800);border:1px solid rgba(247,201,72,.3);}
+.bento-trab{background:linear-gradient(135deg,#082818,#0f4428);border:1px solid rgba(0,212,170,.3);}
+.bento-inc{background:linear-gradient(135deg,#1c0a38,#32186a);border:1px solid rgba(163,113,247,.35);}
+.bento-des{background:linear-gradient(135deg,#3a0610,#620e1e);border:1px solid rgba(255,77,109,.3);}
+.bento-ia{background:linear-gradient(135deg,#07203e,#0e3264);border:1px solid rgba(0,212,255,.25);}
+.bento-doc{background:linear-gradient(135deg,#201a00,#382e00);border:1px solid rgba(247,201,72,.25);}
+.bento-epi{background:linear-gradient(135deg,#052820,#083c30);border:1px solid rgba(0,212,255,.25);}
+.bento-org{background:linear-gradient(135deg,#1a0c38,#2e1860);border:1px solid rgba(123,111,255,.3);}
+.bento-cal:hover{border-color:rgba(0,212,255,.6);box-shadow:0 18px 44px rgba(0,80,220,.25);}
+.bento-pend:hover{border-color:rgba(247,201,72,.55);box-shadow:0 18px 44px rgba(200,130,0,.18);}
+.bento-trab:hover{border-color:rgba(0,212,170,.55);box-shadow:0 18px 44px rgba(0,180,120,.18);}
+.bento-inc:hover{border-color:rgba(163,113,247,.65);box-shadow:0 18px 44px rgba(120,70,230,.22);}
+.bento-des:hover{border-color:rgba(255,77,109,.55);box-shadow:0 18px 44px rgba(210,30,60,.18);}
+.bento-ia:hover{border-color:rgba(0,212,255,.5);box-shadow:0 18px 44px rgba(0,160,255,.18);}
+.bento-doc:hover{border-color:rgba(247,201,72,.45);box-shadow:0 18px 44px rgba(180,130,0,.14);}
+.bento-epi:hover{border-color:rgba(0,212,255,.5);box-shadow:0 18px 44px rgba(0,180,180,.14);}
+.bento-org:hover{border-color:rgba(123,111,255,.55);box-shadow:0 18px 44px rgba(90,70,210,.18);}
 
-/* ── QUICK LINKS ─────────────────────────────────────────────── */
-.qgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:22px;}
-.qlink{border-radius:20px;padding:18px;text-align:center;text-decoration:none;color:inherit;display:block;transition:all .18s;}
-.qlink:hover{transform:translateY(-3px);box-shadow:0 8px 24px rgba(0,0,0,.35);}
+/* ── STAT CARDS — bento style ────────────────────────────────── */
+.stats3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:24px;}
+.stat{border-radius:22px;padding:24px;transition:all .25s;position:relative;overflow:hidden;cursor:default;}
+.stat::before{content:'';position:absolute;top:-20px;right:-20px;width:100px;height:100px;border-radius:50%;background:rgba(255,255,255,.04);}
+.stat:nth-child(1){background:linear-gradient(135deg,#0d265e,#1640a0);border:1px solid rgba(0,212,255,.25);}
+.stat:nth-child(2){background:linear-gradient(135deg,#1c0a38,#32186a);border:1px solid rgba(163,113,247,.3);}
+.stat:nth-child(3){background:linear-gradient(135deg,#3a0610,#620e1e);border:1px solid rgba(255,77,109,.25);}
+.stat:hover{transform:translateY(-3px);box-shadow:0 12px 36px rgba(0,0,0,.4);}
+.stat-lbl{font-size:10px;font-weight:600;letter-spacing:1.2px;text-transform:uppercase;color:rgba(255,255,255,.5);margin-bottom:10px;}
+.stat-val{font-family:'Syne',sans-serif;font-size:44px;font-weight:800;line-height:1;}
+.stat-val.g{color:#00d4ff;text-shadow:0 0 24px rgba(0,212,255,.5);}
+.stat-val.o{color:#c89cff;text-shadow:0 0 24px rgba(163,113,247,.5);}
+.stat-val.b{color:#ff8aaa;text-shadow:0 0 24px rgba(255,107,138,.5);}
+.stat-desc{font-size:11px;color:rgba(255,255,255,.4);margin-top:8px;}
 
 /* ── ALERTS ─────────────────────────────────────────────────── */
 .alert{border-radius:16px;padding:13px 18px;display:flex;align-items:center;gap:10px;font-size:12.5px;margin-bottom:14px;}
@@ -440,9 +453,9 @@ tbody td{padding:12px 18px;font-size:13px;vertical-align:middle;}
     <div class="nsec">Principal</div>
     <div class="ni active" onclick="showPage('dashboard',this)"><span class="ni-icon">&#127968;</span>Resumen PRL</div>
     <div class="nsec">Gesti&#243;n</div>
+    <div class="ni" onclick="showPage('trabajadores',this)"><span class="ni-icon">&#128101;</span>Listado Trabajadores</div>
     <div class="ni" onclick="showPage('calendario',this)"><span class="ni-icon">&#128197;</span>Calendario Formaciones<span class="nbadge w" id="nb-cal">5</span></div>
     <div class="ni" onclick="showPage('formpendientes',this)"><span class="ni-icon">&#9888;&#65039;</span>Formaciones Pendientes<span class="nbadge w" id="nb-fpend">0</span></div>
-    <div class="ni" onclick="showPage('trabajadores',this)"><span class="ni-icon">&#128101;</span>Listado Trabajadores</div>
     <div class="ni" onclick="showPage('incorporaciones',this)"><span class="ni-icon">&#10024;</span>Nuevas Incorporaciones<span class="nbadge" id="nb-inc">0</span></div>
     <div class="ni" onclick="showPage('designacion',this)"><span class="ni-icon">&#127919;</span>Designaci&#243;n PRL</div>
     <div class="nsec">Recursos</div>
@@ -486,6 +499,30 @@ tbody td{padding:12px 18px;font-size:13px;vertical-align:middle;}
         <div class="card"><div class="card-t">Cobertura por encargado</div><div id="dash-depts"></div></div>
         <div class="card"><div class="card-t">Actividad reciente</div><div class="actfeed" id="dash-act"></div></div>
       </div>
+
+      <!-- GRÁFICAS POR SECCIÓN -->
+      <div style="font-family:'Syne',sans-serif;font-size:16px;font-weight:700;margin-bottom:14px">Resumen por sección</div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:28px">
+        <!-- Formaciones -->
+        <div class="card" style="border-radius:22px">
+          <div style="font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--txm);margin-bottom:12px">&#128197; Formaciones</div>
+          <canvas id="chart-form" height="110"></canvas>
+          <div id="chart-form-leyenda" style="margin-top:10px;display:flex;flex-direction:column;gap:5px;font-size:11px;color:var(--txm)"></div>
+        </div>
+        <!-- Trabajadores PRL -->
+        <div class="card" style="border-radius:22px">
+          <div style="font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--txm);margin-bottom:12px">&#128101; Estado trabajadores</div>
+          <canvas id="chart-trab" height="110"></canvas>
+          <div id="chart-trab-leyenda" style="margin-top:10px;display:flex;flex-direction:column;gap:5px;font-size:11px;color:var(--txm)"></div>
+        </div>
+        <!-- EPIs -->
+        <div class="card" style="border-radius:22px">
+          <div style="font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--txm);margin-bottom:12px">&#129686; Estado EPIs</div>
+          <canvas id="chart-epi" height="110"></canvas>
+          <div id="chart-epi-leyenda" style="margin-top:10px;display:flex;flex-direction:column;gap:5px;font-size:11px;color:var(--txm)"></div>
+        </div>
+      </div>
+
       <div style="font-family:'Syne',sans-serif;font-size:16px;font-weight:700;margin-bottom:14px">Accesos directos</div>
       <div class="bento-grid">
         <!-- Fila 1: Calendario (grande) + Formaciones Pendientes + Trabajadores -->
@@ -2481,6 +2518,106 @@ function renderIncorporaciones() {
   renderProtocolo();
 }
 
+// ── GRÁFICAS DASHBOARD ────────────────────────────────────────
+function drawDonut(canvasId, segments, size){
+  var c=document.getElementById(canvasId);
+  if(!c) return;
+  c.width=size||110; c.height=size||110;
+  var ctx2=c.getContext('2d');
+  var cx=c.width/2,cy=c.height/2,r=(c.width/2)-12,ri=r*0.62;
+  var total=segments.reduce(function(a,s){return a+s.v;},0);
+  if(!total){
+    ctx2.beginPath();ctx2.arc(cx,cy,r,0,Math.PI*2);
+    ctx2.lineWidth=ri*0.76;ctx2.strokeStyle='rgba(28,42,94,.5)';ctx2.stroke();
+    return;
+  }
+  var start=-Math.PI/2;
+  segments.forEach(function(s){
+    if(!s.v) return;
+    var angle=(s.v/total)*Math.PI*2;
+    ctx2.beginPath();ctx2.arc(cx,cy,r,start,start+angle);
+    ctx2.lineWidth=ri*0.76;ctx2.strokeStyle=s.c;ctx2.lineCap='round';ctx2.stroke();
+    start+=angle;
+  });
+  // Centro: % mayor
+  var max=segments.reduce(function(a,s){return s.v>a.v?s:a;},{v:0,c:'#fff'});
+  var pct=total>0?Math.round(max.v/total*100):0;
+  ctx2.fillStyle='#e8eaf6';
+  ctx2.font='bold '+(c.width*0.2)+'px Syne,sans-serif';
+  ctx2.textAlign='center';ctx2.textBaseline='middle';
+  ctx2.fillText(pct+'%',cx,cy);
+}
+
+function buildLeyenda(id, segments, total){
+  var el=document.getElementById(id);
+  if(!el) return;
+  var html='';
+  segments.forEach(function(s){
+    var pct=total>0?Math.round(s.v/total*100):0;
+    html+='<div style="display:flex;align-items:center;gap:7px">';
+    html+='<div style="width:8px;height:8px;border-radius:50%;background:'+s.c+';flex-shrink:0"></div>';
+    html+='<span>'+s.l+'</span><span style="margin-left:auto;font-weight:600;color:var(--tx)">'+s.v+' ('+pct+'%)</span>';
+    html+='</div>';
+  });
+  el.innerHTML=html;
+}
+
+function renderCharts(){
+  // ── Gráfica Formaciones ───────────────────────────────────
+  var fActivas=0,fProg=0,fFin=0,fSolic=0;
+  formaciones.forEach(function(f){
+    var est=calcEstadoAuto({fecha:f.fecha,dias:parseInt(f.dias||1),estado:f.estado||'aprobada'});
+    if(est==='encurso') fActivas++;
+    else if(est==='cerrada') fFin++;
+    else fProg++;
+  });
+  solicitudes.forEach(function(s){
+    if(s.estado==='solicitada') fSolic++;
+  });
+  var fTotal=formaciones.length+fSolic;
+  var formSegs=[
+    {v:fActivas,c:'#f7c948',l:'En curso'},
+    {v:fProg,   c:'#7b6fff',l:'Programadas'},
+    {v:fFin,    c:'#00d4ff',l:'Finalizadas'},
+    {v:fSolic,  c:'#ff6b8a',l:'Solicitudes'}
+  ];
+  drawDonut('chart-form',formSegs,110);
+  buildLeyenda('chart-form-leyenda',formSegs,fTotal);
+
+  // ── Gráfica Trabajadores ──────────────────────────────────
+  var tOk=0,tPend=0,tMed=0;
+  trabajadores.forEach(function(t){
+    var st=estadoT(t);
+    if(st.cls==='ok') tOk++;
+    else tPend++;
+    if(t.med==='pendiente'||t.med==='vencida') tMed++;
+  });
+  var tTotal=trabajadores.length||1;
+  var trabSegs=[
+    {v:tOk,  c:'#00d4ff',l:'Al d\u00eda PRL'},
+    {v:tPend,c:'#ff6b8a',l:'Formaci\u00f3n pendiente'},
+    {v:tMed, c:'#f7c948',l:'Med. pendiente'}
+  ];
+  drawDonut('chart-trab',trabSegs,110);
+  buildLeyenda('chart-trab-leyenda',trabSegs,tTotal);
+
+  // ── Gráfica EPIs ──────────────────────────────────────────
+  var eOk=0,eRev=0,ePend=0;
+  epis.forEach(function(e){
+    if(e.estado==='ok'||e.estado==='vigente') eOk++;
+    else if(e.estado==='revisar') eRev++;
+    else ePend++;
+  });
+  var eTotal=epis.length||1;
+  var epiSegs=[
+    {v:eOk, c:'#00d4ff',l:'En regla'},
+    {v:eRev,c:'#f7c948',l:'Por revisar'},
+    {v:ePend,c:'#ff6b8a',l:'Pendientes'}
+  ];
+  drawDonut('chart-epi',epiSegs,110);
+  buildLeyenda('chart-epi-leyenda',epiSegs,eTotal);
+}
+
 // ── RENDER DASHBOARD ──────────────────────────────────────────
 function renderDashboard() {
   var total=trabajadores.length;
@@ -2551,6 +2688,8 @@ function renderDashboard() {
     if(!html) html='<div class="actitem"><div class="acticon g">&#9989;</div><div><div class="acttext">Portal PRL iniciado correctamente</div><div class="acttime">Al iniciar</div></div></div>';
     ac.innerHTML=html;
   }
+  // Render gráficas de resumen
+  setTimeout(renderCharts, 0);
 }
 
 // ── UPLOAD DOC (simulate) ─────────────────────────────────────
