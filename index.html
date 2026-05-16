@@ -496,29 +496,38 @@ tbody td{padding:12px 18px;font-size:13px;vertical-align:middle;}
         <div class="stat"><div class="stat-lbl">Formaciones programadas</div><div class="stat-val o" id="stat-form">&#8212;</div><div class="stat-desc">Pr&#243;ximas o activas</div></div>
         <div class="stat"><div class="stat-lbl">Cobertura formativa</div><div class="stat-val b" id="stat-pct">&#8212;</div><div class="stat-desc">Trabajadores al d&#237;a en PRL</div></div>
       </div>
-      <div class="two">
-        <div class="card"><div class="card-t">Cobertura por encargado</div><div id="dash-depts"></div></div>
-        <div class="card"><div class="card-t">Actividad reciente</div><div class="actfeed" id="dash-act"></div></div>
+      <div style="display:flex;justify-content:flex-end;margin-bottom:8px">
+        <div class="card" style="flex:1"><div class="card-t">Actividad reciente</div><div class="actfeed" id="dash-act"></div></div>
+        <div id="dash-depts" style="display:none"></div>
       </div>
 
-      <!-- GRÁFICAS POR SECCIÓN -->
-      <div style="font-family:'Syne',sans-serif;font-size:16px;font-weight:700;margin-bottom:14px">Resumen por sección</div>
+      <!-- GRÁFICAS POR SECCIÓN — clicables para exportar Excel -->
+      <div style="font-family:'Syne',sans-serif;font-size:16px;font-weight:700;margin-bottom:14px">Resumen por sección <span style="font-size:11px;font-weight:400;color:var(--txm)">— pulsa cada gráfica para descargar informe</span></div>
       <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:28px">
         <!-- Formaciones -->
-        <div class="card" style="border-radius:22px">
-          <div style="font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--txm);margin-bottom:12px">&#128197; Formaciones</div>
+        <div class="card" style="border-radius:22px;cursor:pointer;transition:all .2s" onclick="exportarFormacionesXLS()" onmouseover="this.style.borderColor='rgba(0,212,255,.4)'" onmouseout="this.style.borderColor='rgba(28,42,110,.7)'" title="Descargar informe de formaciones">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+            <span style="font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--txm)">&#128197; Formaciones</span>
+            <span style="font-size:10px;color:var(--acc);opacity:.7">&#128202; xlsx</span>
+          </div>
           <canvas id="chart-form" height="110"></canvas>
           <div id="chart-form-leyenda" style="margin-top:10px;display:flex;flex-direction:column;gap:5px;font-size:11px;color:var(--txm)"></div>
         </div>
         <!-- Trabajadores PRL -->
-        <div class="card" style="border-radius:22px">
-          <div style="font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--txm);margin-bottom:12px">&#128101; Estado trabajadores</div>
+        <div class="card" style="border-radius:22px;cursor:pointer;transition:all .2s" onclick="exportarTrabajadoresXLS()" onmouseover="this.style.borderColor='rgba(123,111,255,.4)'" onmouseout="this.style.borderColor='rgba(28,42,110,.7)'" title="Descargar informe de trabajadores">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+            <span style="font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--txm)">&#128101; Estado trabajadores</span>
+            <span style="font-size:10px;color:var(--acc3);opacity:.7">&#128202; xlsx</span>
+          </div>
           <canvas id="chart-trab" height="110"></canvas>
           <div id="chart-trab-leyenda" style="margin-top:10px;display:flex;flex-direction:column;gap:5px;font-size:11px;color:var(--txm)"></div>
         </div>
         <!-- EPIs -->
-        <div class="card" style="border-radius:22px">
-          <div style="font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--txm);margin-bottom:12px">&#129686; Estado EPIs</div>
+        <div class="card" style="border-radius:22px;cursor:pointer;transition:all .2s" onclick="exportarEpisXLS()" onmouseover="this.style.borderColor='rgba(255,107,138,.4)'" onmouseout="this.style.borderColor='rgba(28,42,110,.7)'" title="Descargar informe de EPIs">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+            <span style="font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--txm)">&#129686; Estado EPIs</span>
+            <span style="font-size:10px;color:var(--acc2);opacity:.7">&#128202; xlsx</span>
+          </div>
           <canvas id="chart-epi" height="110"></canvas>
           <div id="chart-epi-leyenda" style="margin-top:10px;display:flex;flex-direction:column;gap:5px;font-size:11px;color:var(--txm)"></div>
         </div>
@@ -690,7 +699,6 @@ tbody td{padding:12px 18px;font-size:13px;vertical-align:middle;}
           <button class="fbtn" onclick="setFiltro('ok',this)">Al d&#237;a</button>
           <button class="fbtn" onclick="setFiltro('pe',this)">Pendientes</button>
           <button class="btn btn-p btn-sm" style="margin-left:auto" onclick="_fromInc=false;openModal('trabajador')">+ A&#241;adir</button>
-          <button class="btn btn-sm" style="background:rgba(0,180,80,.12);color:#00c853;border:1px solid rgba(0,180,80,.3);display:flex;align-items:center;gap:5px" onclick="exportarExcel()" title="Descargar informe Excel">&#128202; Excel</button>
         </div>
         <table>
           <thead><tr><th>Trabajador</th><th>Encargado</th><th>Capacitaciones</th><th>Estado</th><th style="text-align:center">Acciones</th></tr></thead>
@@ -2579,7 +2587,7 @@ function buildLeyenda(id, segments, total){
 
 function renderCharts(){
   // ── Gráfica Formaciones ───────────────────────────────────
-  var fActivas=0,fProg=0,fFin=0,fSolic=0;
+  var fSolic=0,fProg=0,fActivas=0,fFin=0;
   formaciones.forEach(function(f){
     var est=calcEstadoAuto({fecha:f.fecha,dias:parseInt(f.dias||1),estado:f.estado||'aprobada'});
     if(est==='encurso') fActivas++;
@@ -2591,10 +2599,10 @@ function renderCharts(){
   });
   var fTotal=formaciones.length+fSolic;
   var formSegs=[
-    {v:fActivas,c:'#f7c948',l:'En curso'},
+    {v:fSolic,  c:'#ff6b8a',l:'Solicitadas'},
     {v:fProg,   c:'#7b6fff',l:'Programadas'},
-    {v:fFin,    c:'#00d4ff',l:'Finalizadas'},
-    {v:fSolic,  c:'#ff6b8a',l:'Solicitudes'}
+    {v:fActivas,c:'#f7c948',l:'En curso'},
+    {v:fFin,    c:'#00d4ff',l:'Finalizadas'}
   ];
   drawDonut('chart-form',formSegs,110);
   buildLeyenda('chart-form-leyenda',formSegs,fTotal);
@@ -2707,91 +2715,213 @@ function renderDashboard() {
   setTimeout(renderCharts, 0);
 }
 
-// ── EXPORTAR EXCEL ────────────────────────────────────────────
-function exportarExcel(){
-  if(typeof XLSX === 'undefined'){
-    toast('SheetJS no cargado. Comprueba tu conexión.','#f85149'); return;
-  }
+// ── EXPORTAR EXCEL — FUNCIONES POR GRÁFICA ───────────────────
 
-  var wb = XLSX.utils.book_new();
-  var fecha = new Date().toLocaleDateString('es-ES');
-
-  // ── HOJA 1: Resumen de trabajadores ─────────────────────────
-  var h1 = [['INFORME PRL — RESUMEN DE TRABAJADORES','','','','','',''],
-             ['Generado: '+fecha,'','','','','',''],
-             [''],
-             ['Nombre','Puesto','Encargado','Alta','Estado PRL','Aptitud Médica','EPIs']];
+// Helper: agrupa trabajadores por encargado
+function _porEncargado(){
+  var grupos={};
+  var orden=[];
   for(var i=0;i<trabajadores.length;i++){
-    var t=trabajadores[i];
-    var st=estadoT(t);
-    h1.push([
+    var enc=trabajadores[i].dept||'Sin encargado';
+    if(!grupos[enc]){grupos[enc]=[];orden.push(enc);}
+    grupos[enc].push(trabajadores[i]);
+  }
+  return {grupos:grupos,orden:orden};
+}
+
+// Helper: nombre seguro para hoja Excel (max 31 chars, sin caracteres especiales)
+function _sheetName(s){
+  return (s||'Sin encargado').replace(/[:\\\/\?\*\[\]]/g,'').slice(0,31);
+}
+
+// Helper: estilos de cabecera
+function _addRow(ws,data,ref){
+  return data;
+}
+
+// ── 1. EXPORTAR FORMACIONES ───────────────────────────────────
+function exportarFormacionesXLS(){
+  if(typeof XLSX==='undefined'){toast('SheetJS no cargado','#f85149');return;}
+  var wb=XLSX.utils.book_new();
+  var fecha=new Date().toLocaleDateString('es-ES');
+  var grupos=_porEncargado();
+
+  // Primero: hoja resumen global
+  var hRes=[
+    ['INFORME FORMACIONES PRL — '+fecha,'','','','',''],
+    [''],
+    ['ESTADO','FORMACIÓN','FECHA','LUGAR','HORARIO','TRABAJADORES ASIGNADOS']
+  ];
+  // Orden: Solicitadas, Programadas, En curso, Finalizadas
+  var byEstado={solicitada:[],aprobada:[],encurso:[],cerrada:[]};
+  formaciones.forEach(function(f){
+    var est=calcEstadoAuto({fecha:f.fecha,dias:parseInt(f.dias||1),estado:f.estado||'aprobada'});
+    byEstado[est]=byEstado[est]||[];
+    byEstado[est].push(f);
+  });
+  solicitudes.forEach(function(s){
+    if(s.estado==='solicitada') byEstado.solicitada.push({titulo:s.titulo,fecha:s.fecha||'-',hora:s.hora||'-',lugar:s.lugar||'-',asistIds:[],_esSolicitud:true});
+  });
+  var estadoLabels={solicitada:'Solicitada',aprobada:'Programada',encurso:'En curso',cerrada:'Finalizada'};
+  ['solicitada','aprobada','encurso','cerrada'].forEach(function(est){
+    (byEstado[est]||[]).forEach(function(f){
+      var asists=(f.asistIds||[]).map(function(id){var t=findById(trabajadores,id);return t?t.nombre:'';}).filter(Boolean).join(', ');
+      hRes.push([estadoLabels[est],f.titulo||'-',f.fecha||'-',f.lugar||'-',f.hora||'-',asists||'Sin asignar']);
+    });
+  });
+  var wsRes=XLSX.utils.aoa_to_sheet(hRes);
+  wsRes['!cols']=[{wch:14},{wch:30},{wch:12},{wch:25},{wch:14},{wch:50}];
+  wsRes['!merges']=[{s:{r:0,c:0},e:{r:0,c:5}}];
+  XLSX.utils.book_append_sheet(wb,wsRes,'Resumen Global');
+
+  // Una hoja por encargado — solo formaciones PROGRAMADAS (aprobadas) con trabajadores del encargado
+  grupos.orden.forEach(function(enc){
+    var trabs=grupos.grupos[enc];
+    var trabIds=trabs.map(function(t){return t.id;});
+    var rows=[
+      ['FORMACIONES — '+enc,'','','',''],
+      ['Generado: '+fecha,'','','',''],
+      [''],
+      ['ESTADO','FORMACIÓN','FECHA','HORARIO/LUGAR','TRABAJADORES DEL ENCARGADO']
+    ];
+    var anyRow=false;
+    ['solicitada','aprobada','encurso','cerrada'].forEach(function(est){
+      (byEstado[est]||[]).forEach(function(f){
+        if(f._esSolicitud && est!=='solicitada') return;
+        var asistEnc=(f.asistIds||[]).filter(function(id){return trabIds.indexOf(id)>=0;}).map(function(id){var t=findById(trabajadores,id);return t?t.nombre:'';}).filter(Boolean);
+        if(asistEnc.length>0||est==='solicitada'){
+          rows.push([estadoLabels[est],f.titulo||'-',f.fecha||'-',(f.hora||'-')+' · '+(f.lugar||'-'),asistEnc.join(', ')||'—']);
+          anyRow=true;
+        }
+      });
+    });
+    if(!anyRow) rows.push(['','','','','Sin formaciones registradas para este grupo']);
+    var ws=XLSX.utils.aoa_to_sheet(rows);
+    ws['!cols']=[{wch:14},{wch:30},{wch:12},{wch:30},{wch:40}];
+    ws['!merges']=[{s:{r:0,c:0},e:{r:0,c:4}}];
+    XLSX.utils.book_append_sheet(wb,ws,_sheetName(enc));
+  });
+
+  XLSX.writeFile(wb,'GHDPRL_Formaciones_'+new Date().toISOString().slice(0,10)+'.xlsx');
+  toast('Informe de formaciones descargado','#00d4ff');
+  addAct('b','&#128197;','Excel formaciones exportado');
+}
+
+// ── 2. EXPORTAR TRABAJADORES ──────────────────────────────────
+function exportarTrabajadoresXLS(){
+  if(typeof XLSX==='undefined'){toast('SheetJS no cargado','#f85149');return;}
+  var wb=XLSX.utils.book_new();
+  var fecha=new Date().toLocaleDateString('es-ES');
+  var grupos=_porEncargado();
+
+  // Hoja resumen global
+  var hRes=[
+    ['INFORME ESTADO TRABAJADORES PRL — '+fecha,'','','','',''],
+    [''],
+    ['TRABAJADOR','PUESTO','ENCARGADO','ESTADO PRL','FORMACIONES PENDIENTES','APTITUD MÉDICA','EPIs']
+  ];
+  trabajadores.forEach(function(t){
+    var reqs=getFormReq(t.caps||[],t.puesto);
+    var pend=reqs.filter(function(r){return !hasFormCompletada(t.id,r);});
+    hRes.push([
       t.nombre||'',
       t.puesto||'',
       t.dept||'Sin encargado',
-      t.fecha||'',
-      st.cls==='ok'?'Al día':st.cls==='ex'?'Vencido':'Pendiente',
+      estadoT(t).cls==='ok'?'Al día':'Pendiente',
+      pend.length>0?pend.join(', '):'—',
       t.med==='apto'?'Apto':t.med==='no-apto'?'No apto':'Pendiente',
-      t.epis||'Pendientes'
+      (!t.epis||t.epis==='Pendientes'||t.epis==='-')?'Sin asignar':t.epis
     ]);
-  }
-  var ws1 = XLSX.utils.aoa_to_sheet(h1);
-  ws1['!cols']=[{wch:30},{wch:18},{wch:22},{wch:12},{wch:14},{wch:16},{wch:40}];
-  ws1['!merges']=[{s:{r:0,c:0},e:{r:0,c:6}}];
-  XLSX.utils.book_append_sheet(wb, ws1, 'Resumen Trabajadores');
+  });
+  var wsRes=XLSX.utils.aoa_to_sheet(hRes);
+  wsRes['!cols']=[{wch:28},{wch:18},{wch:22},{wch:12},{wch:50},{wch:14},{wch:50}];
+  wsRes['!merges']=[{s:{r:0,c:0},e:{r:0,c:6}}];
+  XLSX.utils.book_append_sheet(wb,wsRes,'Resumen Global');
 
-  // ── HOJA 2: Formaciones pendientes ───────────────────────────
-  var h2 = [['INFORME PRL — FORMACIONES PENDIENTES','','','',''],
-             ['Generado: '+fecha,'','','',''],
-             [''],
-             ['Trabajador','Puesto','Encargado','Formación Pendiente','Básica/Obligatoria']];
-  var anyPend2=false;
-  for(var i2=0;i2<trabajadores.length;i2++){
-    var t2=trabajadores[i2];
-    var reqs=getFormReq(t2.caps||[], t2.puesto);
-    var pend=reqs.filter(function(r){return !hasFormCompletada(t2.id,r);});
-    for(var j=0;j<pend.length;j++){
-      anyPend2=true;
-      h2.push([
-        t2.nombre||'',
-        t2.puesto||'',
-        t2.dept||'Sin encargado',
-        pend[j],
-        FORM_BASICO[pend[j]]?'Sí (Básica)':'No'
+  // Una hoja por encargado
+  grupos.orden.forEach(function(enc){
+    var trabs=grupos.grupos[enc];
+    var rows=[
+      ['ESTADO TRABAJADORES — '+enc,'','','','',''],
+      ['Generado: '+fecha,'','','','',''],
+      [''],
+      ['TRABAJADOR','PUESTO','ESTADO PRL','FORMACIONES PENDIENTES','APTITUD MÉDICA','EPIs']
+    ];
+    trabs.forEach(function(t){
+      var reqs=getFormReq(t.caps||[],t.puesto);
+      var pend=reqs.filter(function(r){return !hasFormCompletada(t.id,r);});
+      var medLbl=t.med==='apto'?'Apto':t.med==='no-apto'?'No apto':'Pendiente';
+      var epiLbl=(!t.epis||t.epis==='Pendientes'||t.epis==='-')?'⚠ Sin asignar':t.epis;
+      var stLbl=estadoT(t).cls==='ok'?'✔ Al día':'✗ Pendiente';
+      rows.push([
+        t.nombre||'',
+        t.puesto||'',
+        stLbl,
+        pend.length>0?pend.join(' / '):'— Todo al día —',
+        medLbl,
+        epiLbl
       ]);
-    }
-  }
-  if(!anyPend2) h2.push(['','','','— Todos los trabajadores al día —','']);
-  var ws2 = XLSX.utils.aoa_to_sheet(h2);
-  ws2['!cols']=[{wch:30},{wch:18},{wch:22},{wch:25},{wch:18}];
-  ws2['!merges']=[{s:{r:0,c:0},e:{r:0,c:4}}];
-  XLSX.utils.book_append_sheet(wb, ws2, 'Formaciones Pendientes');
+    });
+    var ws=XLSX.utils.aoa_to_sheet(rows);
+    ws['!cols']=[{wch:28},{wch:18},{wch:14},{wch:55},{wch:14},{wch:55}];
+    ws['!merges']=[{s:{r:0,c:0},e:{r:0,c:5}}];
+    XLSX.utils.book_append_sheet(wb,ws,_sheetName(enc));
+  });
 
-  // ── HOJA 3: EPIs pendientes / sin asignar ───────────────────
-  var h3 = [['INFORME PRL — EPIs','','',''],
-             ['Generado: '+fecha,'','',''],
-             [''],
-             ['Trabajador','Puesto','Encargado','EPIs Asignados']];
-  for(var i3=0;i3<trabajadores.length;i3++){
-    var t3=trabajadores[i3];
-    var epiVal=t3.epis||'';
-    var epiPend=!epiVal||epiVal.trim()===''||epiVal==='Pendientes'||epiVal==='-';
-    h3.push([
-      t3.nombre||'',
-      t3.puesto||'',
-      t3.dept||'Sin encargado',
-      epiPend?'⚠ Sin EPIs asignados':epiVal
-    ]);
-  }
-  var ws3 = XLSX.utils.aoa_to_sheet(h3);
-  ws3['!cols']=[{wch:30},{wch:18},{wch:22},{wch:60}];
-  ws3['!merges']=[{s:{r:0,c:0},e:{r:0,c:3}}];
-  XLSX.utils.book_append_sheet(wb, ws3, 'EPIs');
+  XLSX.writeFile(wb,'GHDPRL_Trabajadores_'+new Date().toISOString().slice(0,10)+'.xlsx');
+  toast('Informe de trabajadores descargado','#7b6fff');
+  addAct('b','&#128101;','Excel trabajadores exportado');
+}
 
-  // ── Descarga ─────────────────────────────────────────────────
-  var nombre='GHDPRL_Informe_'+new Date().toISOString().slice(0,10)+'.xlsx';
-  XLSX.writeFile(wb, nombre);
-  toast('Excel generado: '+nombre,'#00c853');
-  addAct('g','&#128202;','Informe Excel exportado');
+// ── 3. EXPORTAR EPIs ──────────────────────────────────────────
+function exportarEpisXLS(){
+  if(typeof XLSX==='undefined'){toast('SheetJS no cargado','#f85149');return;}
+  var wb=XLSX.utils.book_new();
+  var fecha=new Date().toLocaleDateString('es-ES');
+  var grupos=_porEncargado();
+
+  // Hoja resumen global
+  var hRes=[
+    ['INFORME EPIs PRL — '+fecha,'','',''],
+    [''],
+    ['TRABAJADOR','PUESTO','ENCARGADO','EPIs ASIGNADOS']
+  ];
+  trabajadores.forEach(function(t){
+    var epiLbl=(!t.epis||t.epis==='Pendientes'||t.epis==='-')?'⚠ Sin EPIs asignados':t.epis;
+    hRes.push([t.nombre||'',t.puesto||'',t.dept||'Sin encargado',epiLbl]);
+  });
+  var wsRes=XLSX.utils.aoa_to_sheet(hRes);
+  wsRes['!cols']=[{wch:28},{wch:18},{wch:22},{wch:70}];
+  wsRes['!merges']=[{s:{r:0,c:0},e:{r:0,c:3}}];
+  XLSX.utils.book_append_sheet(wb,wsRes,'Resumen Global');
+
+  // Una hoja por encargado
+  grupos.orden.forEach(function(enc){
+    var trabs=grupos.grupos[enc];
+    var epiStats={ok:0,pend:0};
+    var rows=[
+      ['EPIs — '+enc,'',''],
+      ['Generado: '+fecha,'',''],
+      [''],
+      ['TRABAJADOR','PUESTO','EPIs ASIGNADOS']
+    ];
+    trabs.forEach(function(t){
+      var sinEpi=!t.epis||t.epis==='Pendientes'||t.epis==='-';
+      var epiLbl=sinEpi?'⚠ Sin EPIs asignados':t.epis;
+      if(sinEpi) epiStats.pend++; else epiStats.ok++;
+      rows.push([t.nombre||'',t.puesto||'',epiLbl]);
+    });
+    rows.push(['']);
+    rows.push(['RESUMEN','Con EPIs: '+epiStats.ok,'Sin EPIs: '+epiStats.pend]);
+    var ws=XLSX.utils.aoa_to_sheet(rows);
+    ws['!cols']=[{wch:28},{wch:18},{wch:70}];
+    ws['!merges']=[{s:{r:0,c:0},e:{r:0,c:2}}];
+    XLSX.utils.book_append_sheet(wb,ws,_sheetName(enc));
+  });
+
+  XLSX.writeFile(wb,'GHDPRL_EPIs_'+new Date().toISOString().slice(0,10)+'.xlsx');
+  toast('Informe de EPIs descargado','#ff6b8a');
+  addAct('g','&#129686;','Excel EPIs exportado');
 }
 
 // ── UPLOAD DOC (simulate) ─────────────────────────────────────
