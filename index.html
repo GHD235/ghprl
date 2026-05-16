@@ -2184,6 +2184,100 @@ function renderTrabajadores(busq) {
   tbody.innerHTML=html;
 }
 
+// ── GMAIL AVISO FORMACIÓN ─────────────────────────────────────
+function gmailFormacion(id){
+  var f=findById(formaciones,id);
+  if(!f){toast('Formación no encontrada','#f85149');return;}
+
+  // Calcula número de semana
+  function getWeek(dateStr){
+    var d=new Date(dateStr+'T12:00:00');
+    var onejan=new Date(d.getFullYear(),0,1);
+    return Math.ceil((((d-onejan)/86400000)+onejan.getDay()+1)/7);
+  }
+
+  // Construye filas de fechas/horario/lugar
+  var semana=f.fecha?getWeek(f.fecha):'-';
+  var filaDias='';
+  if(f.dias&&f.dias>1&&f.fechas&&f.fechas.length>1){
+    var fechasStr=f.fechas.map(function(fd){
+      if(!fd) return '';
+      return new Date(fd+'T12:00:00').toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+    }).filter(Boolean).join('\n                         ');
+    var horasStr=f.horarios&&f.horarios.length
+      ? f.horarios.join(' / ')
+      : (f.hora||'Por confirmar');
+    var lugarStr=f.lugares&&f.lugares.length
+      ? [...new Set(f.lugares)].join(' / ')
+      : (f.lugar||'Por confirmar');
+    filaDias='   '+semana+'   '+fechasStr+'\n'+'         Horario: '+horasStr+'\n'+'         Lugar:   '+lugarStr;
+  } else {
+    var fechaFmt=f.fecha
+      ? new Date(f.fecha+'T12:00:00').toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long',year:'numeric'})
+      : 'Por confirmar';
+    filaDias='   '+semana+'   '+fechaFmt+'\n'+'         Horario: '+(f.hora||'Por confirmar')+'\n'+'         Lugar:   '+(f.lugar||'Por confirmar');
+  }
+
+  // Construye listado de asistentes
+  var asistLines='   (Sin trabajadores asignados a esta formación)';
+  if(f.asistIds&&f.asistIds.length){
+    var lineas=f.asistIds.map(function(tid){
+      var t=findById(trabajadores,tid);
+      if(!t) return null;
+      var nombre=(t.nombre||'').padEnd(32,' ');
+      var dept=(t.dept||'Sin encargado').padEnd(30,' ');
+      return '   '+nombre+dept;
+    }).filter(Boolean);
+    if(lineas.length){
+      asistLines='   '+('NOMBRE').padEnd(32,' ')+('ENCARGADO / DPTO').padEnd(30,' ')+'\n';
+      asistLines+='   '+'-'.repeat(60)+'\n';
+      asistLines+=lineas.join('\n');
+    }
+  }
+
+  var tipoTxt=f.tipo==='obligatorio'?'OBLIGATORIA - Asistencia 100% requerida':'Recomendada';
+  var estAuto=calcEstadoAuto({fecha:f.fecha,dias:parseInt(f.dias||1),estado:f.estado||'aprobada'});
+  var estLabels={solicitada:'SOLICITADA',aprobada:'PROGRAMADA',encurso:'EN CURSO',cerrada:'FINALIZADA'};
+
+  var asunto='[PRL] Recordatorio de formaci\u00f3n: '+(f.titulo||'').toUpperCase();
+
+  var cuerpo=
+'IMPORTANTE: Se ruega puntualidad. La F.L.C. exige el 100% de asistencia,\n'+
+'por ello en caso de inspecci\u00f3n se eliminan a los ausentes del registro.\n'+
+'\n'+
+'══════════════════════════════════════════════════════\n'+
+'  RECORDATORIO DE FORMACI\u00d3N PRL\n'+
+'══════════════════════════════════════════════════════\n'+
+'\n'+
+'  FORMACI\u00d3N: '+(f.titulo||'').toUpperCase()+'\n'+
+'  ESTADO:    '+( estLabels[estAuto]||'')+'\n'+
+'  TIPO:      '+tipoTxt+'\n'+
+'\n'+
+'──────────────────────────────────────────────────────\n'+
+'  SEMANA   FECHA DE IMPARTICI\u00d3N\n'+
+'──────────────────────────────────────────────────────\n'+
+filaDias+'\n'+
+'\n'+
+'══════════════════════════════════════════════════════\n'+
+'  TRABAJADORES CONVOCADOS\n'+
+'══════════════════════════════════════════════════════\n'+
+'\n'+
+asistLines+'\n'+
+'\n'+
+'──────────────────────────────────────────────────────\n'+
+'Por favor, confirme su asistencia respondiendo\n'+
+'a este correo antes de la fecha de inicio.\n'+
+'\n'+
+'Atentamente,\n'+
+'Departamento de Prevenci\u00f3n de Riesgos Laborales\n'+
+'GHDPRL';
+
+  var url='https://mail.google.com/mail/?view=cm&fs=1'+
+          '&su='+encodeURIComponent(asunto)+
+          '&body='+encodeURIComponent(cuerpo);
+  window.open(url,'_blank');
+}
+
 // ── RENDER FORMACIONES ────────────────────────────────────────
 var TCOL={obligatorio:'o',voluntaria:'b',recurrente:'g'};
 var TACC={obligatorio:'#ff6b35',voluntaria:'#5b8dee',recurrente:'#00d4aa'};
@@ -2276,6 +2370,9 @@ function renderFormaciones() {
     h+='<div class="evinfo"><div class="evtitle">'+esc(f.titulo)+' '+estBadge+' <span class="evchev" id="chev-'+f.id+'">&#9660;</span></div><div class="evmeta">'+esc(f.lugar||'-')+' &middot; '+esc(f.hora||'-')+(f.dias>1?' &middot; '+f.dias+' d\u00edas':'')+'</div></div>';
     h+='<span class="evbadge '+bdg+'">'+lbl+'</span>';
     h+='<div class="abts" style="margin-left:8px" onclick="event.stopPropagation()">';
+    h+='<button class="btn btn-sm" style="background:#fff;color:#EA4335;border:1px solid rgba(234,67,53,.3);padding:5px 9px;gap:4px;font-weight:700" onclick="gmailFormacion(\''+f.id+'\')" title="Enviar aviso por Gmail">'+
+       '<svg width="14" height="14" viewBox="0 0 24 24" style="flex-shrink:0"><path fill="#EA4335" d="M24 5.457v13.909c0 .904-.732 1.636-1.636 1.636h-3.819V11.73L12 16.64l-6.545-4.91v9.273H1.636A1.636 1.636 0 0 1 0 19.366V5.457c0-2.023 2.309-3.178 3.927-1.964L5.455 4.64 12 9.548l6.545-4.907 1.528-1.147C21.69 2.28 24 3.434 24 5.457z"/></svg>'+
+       'Avisar</button>';
     h+='<button class="btn btn-sm btn-e" onclick="openModal(\'formacion\',\''+f.id+'\')">Editar</button>';
     h+='<button class="btn btn-sm btn-d" onclick="delFormacion(\''+f.id+'\')">Borrar</button>';
     h+='</div></div>';
