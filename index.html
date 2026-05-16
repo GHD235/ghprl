@@ -5,7 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>GHDPRL</title>
 <!-- Capa 4: Content Security Policy — bloquea scripts externos no autorizados -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'self' https://fonts.googleapis.com https://fonts.gstatic.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://*.firebasedatabase.app; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com;">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self' https://fonts.googleapis.com https://fonts.gstatic.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://*.firebasedatabase.app https://cdnjs.cloudflare.com; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com;">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
 /* ══════════════════════════════════════════════════════════════
@@ -689,6 +690,7 @@ tbody td{padding:12px 18px;font-size:13px;vertical-align:middle;}
           <button class="fbtn" onclick="setFiltro('ok',this)">Al d&#237;a</button>
           <button class="fbtn" onclick="setFiltro('pe',this)">Pendientes</button>
           <button class="btn btn-p btn-sm" style="margin-left:auto" onclick="_fromInc=false;openModal('trabajador')">+ A&#241;adir</button>
+          <button class="btn btn-sm" style="background:rgba(0,180,80,.12);color:#00c853;border:1px solid rgba(0,180,80,.3);display:flex;align-items:center;gap:5px" onclick="exportarExcel()" title="Descargar informe Excel">&#128202; Excel</button>
         </div>
         <table>
           <thead><tr><th>Trabajador</th><th>Encargado</th><th>Capacitaciones</th><th>Estado</th><th style="text-align:center">Acciones</th></tr></thead>
@@ -1350,17 +1352,41 @@ function toggleFormCompletada(trabId, formKey) {
   if(!formCompletadas[trabId]) formCompletadas[trabId]={};
   if(formCompletadas[trabId][formKey]) delete formCompletadas[trabId][formKey];
   else formCompletadas[trabId][formKey]=true;
-  // Auto-update worker form state based on completions
+
+  // Sincroniza t.form con la realidad de formCompletadas
   var t=findById(trabajadores,trabId);
   if(t){
     var reqs=getFormReq(t.caps||[],t.puesto);
-    var allDone=reqs.length>0 && reqs.every(function(r){return formCompletadas[trabId]&&formCompletadas[trabId][r];});
-    if(allDone && t.form!=='ok'){ t.form='ok'; updateById(trabajadores,trabId,{form:'ok'}); }
-    else if(!allDone && t.form==='ok'){ t.form='pendiente'; updateById(trabajadores,trabId,{form:'pendiente'}); }
+    var allDone=reqs.length>0 && reqs.every(function(r){
+      return formCompletadas[trabId]&&formCompletadas[trabId][r];
+    });
+    if(allDone && t.form!=='ok'){
+      t.form='ok';
+      // Guarda el cambio de estado directamente en Firebase
+      var wData={}; for(var k in t) wData[k]=t[k];
+      saveRecord('trabajadores', wData);
+    } else if(!allDone && t.form==='ok'){
+      t.form='pendiente';
+      var wData2={}; for(var k2 in t) wData2[k2]=t[k2];
+      saveRecord('trabajadores', wData2);
+    }
   }
-  saveAll();
+  saveAll(); // guarda formCompletadas
+  updateBadgeFP(); // badge inmediato
   renderFormPendientes();
   renderTrabajadores();
+}
+
+// Badge de Formaciones Pendientes — fuente única: t.form
+// Se llama desde toggleFormCompletada, saveTrabajador y renderFormPendientes
+function updateBadgeFP(){
+  var count=0;
+  for(var i=0;i<trabajadores.length;i++){
+    if(estadoT(trabajadores[i]).cls!=='ok') count++;
+  }
+  var nb=document.getElementById('nb-fpend');
+  if(nb) nb.textContent=count;
+  return count;
 }
 
 function hasFormCompletada(trabId, formKey) {
@@ -1438,19 +1464,7 @@ function renderFormPendientes() {
   if(cp) cp.innerHTML=anyPending?pending_html:'<div style="text-align:center;padding:20px;background:rgba(0,212,170,.06);border:1px solid rgba(0,212,170,.2);border-radius:12px;color:var(--acc);font-size:13px">&#9989; Ninguno con formaciones pendientes</div>';
   if(cd) cd.innerHTML=anyDone?done_html:'<div style="text-align:center;padding:20px;background:var(--sur);border:1px solid var(--brd);border-radius:12px;color:var(--txm);font-size:13px">Sin trabajadores con formaci&#243;n completa todav&#237;a</div>';
 
-  // Actualiza badge del sidebar con el número real de trabajadores con formaciones pendientes
-  var pendCount=0;
-  for(var bi=0;bi<trabajadores.length;bi++){
-    var bt=trabajadores[bi];
-    var breqs=getFormReq(bt.caps||[],bt.puesto);
-    var bhasPending=false;
-    for(var bj=0;bj<breqs.length;bj++){
-      if(!hasFormCompletada(bt.id,breqs[bj])){ bhasPending=true; break; }
-    }
-    if(bhasPending) pendCount++;
-  }
-  var nbFP=document.getElementById('nb-fpend');
-  if(nbFP) nbFP.textContent=pendCount;
+  updateBadgeFP(); // badge unificado — usa t.form como fuente única
 }
 
 var _capSel = [];  // working selection inside modal
@@ -1859,8 +1873,9 @@ function saveTrabajador() {
     delete formCompletadas[trabId];
     saveAll();
   }
-  closeModal('trabajador');renderAll();
-  // Badge update happens inside renderFormPendientes which renderAll calls
+  closeModal('trabajador');
+  renderAll();
+  updateBadgeFP(); // badge inmediato tras cambio de estado en listado
 }
 
 function saveFormacion() {
@@ -2690,6 +2705,93 @@ function renderDashboard() {
   }
   // Render gráficas de resumen
   setTimeout(renderCharts, 0);
+}
+
+// ── EXPORTAR EXCEL ────────────────────────────────────────────
+function exportarExcel(){
+  if(typeof XLSX === 'undefined'){
+    toast('SheetJS no cargado. Comprueba tu conexión.','#f85149'); return;
+  }
+
+  var wb = XLSX.utils.book_new();
+  var fecha = new Date().toLocaleDateString('es-ES');
+
+  // ── HOJA 1: Resumen de trabajadores ─────────────────────────
+  var h1 = [['INFORME PRL — RESUMEN DE TRABAJADORES','','','','','',''],
+             ['Generado: '+fecha,'','','','','',''],
+             [''],
+             ['Nombre','Puesto','Encargado','Alta','Estado PRL','Aptitud Médica','EPIs']];
+  for(var i=0;i<trabajadores.length;i++){
+    var t=trabajadores[i];
+    var st=estadoT(t);
+    h1.push([
+      t.nombre||'',
+      t.puesto||'',
+      t.dept||'Sin encargado',
+      t.fecha||'',
+      st.cls==='ok'?'Al día':st.cls==='ex'?'Vencido':'Pendiente',
+      t.med==='apto'?'Apto':t.med==='no-apto'?'No apto':'Pendiente',
+      t.epis||'Pendientes'
+    ]);
+  }
+  var ws1 = XLSX.utils.aoa_to_sheet(h1);
+  ws1['!cols']=[{wch:30},{wch:18},{wch:22},{wch:12},{wch:14},{wch:16},{wch:40}];
+  ws1['!merges']=[{s:{r:0,c:0},e:{r:0,c:6}}];
+  XLSX.utils.book_append_sheet(wb, ws1, 'Resumen Trabajadores');
+
+  // ── HOJA 2: Formaciones pendientes ───────────────────────────
+  var h2 = [['INFORME PRL — FORMACIONES PENDIENTES','','','',''],
+             ['Generado: '+fecha,'','','',''],
+             [''],
+             ['Trabajador','Puesto','Encargado','Formación Pendiente','Básica/Obligatoria']];
+  var anyPend2=false;
+  for(var i2=0;i2<trabajadores.length;i2++){
+    var t2=trabajadores[i2];
+    var reqs=getFormReq(t2.caps||[], t2.puesto);
+    var pend=reqs.filter(function(r){return !hasFormCompletada(t2.id,r);});
+    for(var j=0;j<pend.length;j++){
+      anyPend2=true;
+      h2.push([
+        t2.nombre||'',
+        t2.puesto||'',
+        t2.dept||'Sin encargado',
+        pend[j],
+        FORM_BASICO[pend[j]]?'Sí (Básica)':'No'
+      ]);
+    }
+  }
+  if(!anyPend2) h2.push(['','','','— Todos los trabajadores al día —','']);
+  var ws2 = XLSX.utils.aoa_to_sheet(h2);
+  ws2['!cols']=[{wch:30},{wch:18},{wch:22},{wch:25},{wch:18}];
+  ws2['!merges']=[{s:{r:0,c:0},e:{r:0,c:4}}];
+  XLSX.utils.book_append_sheet(wb, ws2, 'Formaciones Pendientes');
+
+  // ── HOJA 3: EPIs pendientes / sin asignar ───────────────────
+  var h3 = [['INFORME PRL — EPIs','','',''],
+             ['Generado: '+fecha,'','',''],
+             [''],
+             ['Trabajador','Puesto','Encargado','EPIs Asignados']];
+  for(var i3=0;i3<trabajadores.length;i3++){
+    var t3=trabajadores[i3];
+    var epiVal=t3.epis||'';
+    var epiPend=!epiVal||epiVal.trim()===''||epiVal==='Pendientes'||epiVal==='-';
+    h3.push([
+      t3.nombre||'',
+      t3.puesto||'',
+      t3.dept||'Sin encargado',
+      epiPend?'⚠ Sin EPIs asignados':epiVal
+    ]);
+  }
+  var ws3 = XLSX.utils.aoa_to_sheet(h3);
+  ws3['!cols']=[{wch:30},{wch:18},{wch:22},{wch:60}];
+  ws3['!merges']=[{s:{r:0,c:0},e:{r:0,c:3}}];
+  XLSX.utils.book_append_sheet(wb, ws3, 'EPIs');
+
+  // ── Descarga ─────────────────────────────────────────────────
+  var nombre='GHDPRL_Informe_'+new Date().toISOString().slice(0,10)+'.xlsx';
+  XLSX.writeFile(wb, nombre);
+  toast('Excel generado: '+nombre,'#00c853');
+  addAct('g','&#128202;','Informe Excel exportado');
 }
 
 // ── UPLOAD DOC (simulate) ─────────────────────────────────────
