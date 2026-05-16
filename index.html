@@ -2184,96 +2184,186 @@ function renderTrabajadores(busq) {
   tbody.innerHTML=html;
 }
 
-// ── GMAIL AVISO FORMACIÓN ─────────────────────────────────────
+// ── GMAIL AVISO FORMACIÓN — HTML clipboard ────────────────────
 function gmailFormacion(id){
   var f=findById(formaciones,id);
   if(!f){toast('Formación no encontrada','#f85149');return;}
 
-  // Calcula número de semana
-  function getWeek(dateStr){
-    var d=new Date(dateStr+'T12:00:00');
-    var onejan=new Date(d.getFullYear(),0,1);
-    return Math.ceil((((d-onejan)/86400000)+onejan.getDay()+1)/7);
-  }
-
-  // Construye filas de fechas/horario/lugar
-  var semana=f.fecha?getWeek(f.fecha):'-';
-  var filaDias='';
-  if(f.dias&&f.dias>1&&f.fechas&&f.fechas.length>1){
-    var fechasStr=f.fechas.map(function(fd){
-      if(!fd) return '';
-      return new Date(fd+'T12:00:00').toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
-    }).filter(Boolean).join('\n                         ');
-    var horasStr=f.horarios&&f.horarios.length
-      ? f.horarios.join(' / ')
-      : (f.hora||'Por confirmar');
-    var lugarStr=f.lugares&&f.lugares.length
-      ? [...new Set(f.lugares)].join(' / ')
-      : (f.lugar||'Por confirmar');
-    filaDias='   '+semana+'   '+fechasStr+'\n'+'         Horario: '+horasStr+'\n'+'         Lugar:   '+lugarStr;
-  } else {
-    var fechaFmt=f.fecha
-      ? new Date(f.fecha+'T12:00:00').toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long',year:'numeric'})
-      : 'Por confirmar';
-    filaDias='   '+semana+'   '+fechaFmt+'\n'+'         Horario: '+(f.hora||'Por confirmar')+'\n'+'         Lugar:   '+(f.lugar||'Por confirmar');
-  }
-
-  // Construye listado de asistentes
-  var asistLines='   (Sin trabajadores asignados a esta formación)';
-  if(f.asistIds&&f.asistIds.length){
-    var lineas=f.asistIds.map(function(tid){
-      var t=findById(trabajadores,tid);
-      if(!t) return null;
-      var nombre=(t.nombre||'').padEnd(32,' ');
-      var dept=(t.dept||'Sin encargado').padEnd(30,' ');
-      return '   '+nombre+dept;
-    }).filter(Boolean);
-    if(lineas.length){
-      asistLines='   '+('NOMBRE').padEnd(32,' ')+('ENCARGADO / DPTO').padEnd(30,' ')+'\n';
-      asistLines+='   '+'-'.repeat(60)+'\n';
-      asistLines+=lineas.join('\n');
-    }
-  }
-
-  var tipoTxt=f.tipo==='obligatorio'?'OBLIGATORIA - Asistencia 100% requerida':'Recomendada';
   var estAuto=calcEstadoAuto({fecha:f.fecha,dias:parseInt(f.dias||1),estado:f.estado||'aprobada'});
   var estLabels={solicitada:'SOLICITADA',aprobada:'PROGRAMADA',encurso:'EN CURSO',cerrada:'FINALIZADA'};
 
-  var asunto='[PRL] Recordatorio de formaci\u00f3n: '+(f.titulo||'').toUpperCase();
+  function getWeek(ds){var d=new Date(ds+'T12:00:00');var j=new Date(d.getFullYear(),0,1);return Math.ceil((((d-j)/86400000)+j.getDay()+1)/7);}
+  function fmtF(ds){if(!ds)return 'Por confirmar';return new Date(ds+'T12:00:00').toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long',year:'numeric'});}
 
-  var cuerpo=
-'IMPORTANTE: Se ruega puntualidad. La F.L.C. exige el 100% de asistencia,\n'+
-'por ello en caso de inspecci\u00f3n se eliminan a los ausentes del registro.\n'+
-'\n'+
-'══════════════════════════════════════════════════════\n'+
-'  RECORDATORIO DE FORMACI\u00d3N PRL\n'+
-'══════════════════════════════════════════════════════\n'+
-'\n'+
-'  FORMACI\u00d3N: '+(f.titulo||'').toUpperCase()+'\n'+
-'  ESTADO:    '+( estLabels[estAuto]||'')+'\n'+
-'  TIPO:      '+tipoTxt+'\n'+
-'\n'+
-'──────────────────────────────────────────────────────\n'+
-'  SEMANA   FECHA DE IMPARTICI\u00d3N\n'+
-'──────────────────────────────────────────────────────\n'+
-filaDias+'\n'+
-'\n'+
-'══════════════════════════════════════════════════════\n'+
-'  TRABAJADORES CONVOCADOS\n'+
-'══════════════════════════════════════════════════════\n'+
-'\n'+
-asistLines+'\n'+
-'\n'+
-'──────────────────────────────────────────────────────\n'+
-'Por favor, confirme su asistencia respondiendo\n'+
-'a este correo antes de la fecha de inicio.\n'+
-'\n'+
-'Atentamente,\n'+
-'Departamento de Prevenci\u00f3n de Riesgos Laborales\n'+
-'GHDPRL';
+  var semana=f.fecha?getWeek(f.fecha):'-';
 
-  var url='mailto:?subject='+encodeURIComponent(asunto)+'&body='+encodeURIComponent(cuerpo);
-  window.location.href=url;
+  // Filas de fechas
+  var filasFecha=[];
+  if(f.dias&&parseInt(f.dias)>1&&f.fechas&&f.fechas.length>1){
+    for(var d=0;d<parseInt(f.dias);d++){
+      filasFecha.push({
+        semana:d===0?'Sem. '+semana:'',
+        fecha:fmtF(f.fechas[d]||f.fecha),
+        hora:(f.horarios&&f.horarios[d])||f.hora||'Por confirmar',
+        lugar:(f.lugares&&f.lugares[d])||f.lugar||'Por confirmar'
+      });
+    }
+  } else {
+    filasFecha.push({semana:'Sem. '+semana,fecha:fmtF(f.fecha),hora:f.hora||'Por confirmar',lugar:f.lugar||'Por confirmar'});
+  }
+
+  // Filas de asistentes
+  var asistRows=[];
+  if(f.asistIds&&f.asistIds.length){
+    for(var ai=0;ai<f.asistIds.length;ai++){
+      var tw=findById(trabajadores,f.asistIds[ai]);
+      if(tw) asistRows.push({nombre:tw.nombre||'',puesto:tw.puesto||'',dept:tw.dept||'Sin encargado'});
+    }
+  }
+
+  // ── Estilos Google Sheets ──────────────────────────────────
+  var CELL='border:1px solid #000000;padding:5px 8px;font-size:10pt;font-family:Arial,sans-serif;';
+  var HEAD=CELL+'background:#1a73e8;color:#ffffff;font-weight:bold;text-align:center;';          // azul Google
+  var SUBH=CELL+'background:#c9daf8;color:#000000;font-weight:bold;';                            // azul claro
+  var WARN=CELL+'background:#fce8b2;color:#7f4c00;font-weight:bold;text-align:center;';          // amarillo aviso
+  var ROW0=CELL+'background:#ffffff;';
+  var ROW1=CELL+'background:#f3f3f3;';
+  var DATECELL=CELL+'background:#d9ead3;font-weight:bold;';  // verde fecha (como Google Sheets)
+
+  // Título grande
+  var tituloHtml=
+    '<table style="width:100%;border-collapse:collapse;margin-bottom:0">'  +
+    '<tr><td colspan="4" style="'+HEAD+'font-size:12pt;letter-spacing:.3px;padding:8px 10px">'+
+      esc((f.titulo||'').toUpperCase())+
+    '</td></tr>'+
+    '<tr>'+
+      '<td style="'+SUBH+'width:100px">Estado</td>'+
+      '<td style="'+ROW0+'">'+esc(estLabels[estAuto]||'')+'</td>'+
+      '<td style="'+SUBH+'width:80px">Tipo</td>'+
+      '<td style="'+ROW0+'">'+esc(f.tipo==='obligatorio'?'OBLIGATORIA':'Voluntaria')+'</td>'+
+    '</tr>'+
+    (parseInt(f.dias)>1?
+      '<tr>'+
+        '<td style="'+SUBH+'">Duración</td>'+
+        '<td colspan="3" style="'+ROW0+'">'+parseInt(f.dias)+' días</td>'+
+      '</tr>':'')+
+    '</table>';
+
+  // Tabla de fechas
+  var fechaHtml=
+    '<table style="width:100%;border-collapse:collapse;margin-top:12px;margin-bottom:0">'+
+    '<tr>'+
+      '<th style="'+HEAD+'width:90px">Semana</th>'+
+      '<th style="'+HEAD+'">Fecha de impartición</th>'+
+      '<th style="'+HEAD+'width:150px">Horario</th>'+
+      '<th style="'+HEAD+'">Lugar de impartición</th>'+
+    '</tr>';
+  for(var fi=0;fi<filasFecha.length;fi++){
+    var fr=filasFecha[fi];
+    var bg=fi%2===0?ROW0:ROW1;
+    fechaHtml+=
+      '<tr>'+
+        '<td style="'+bg+'text-align:center;font-weight:bold">'+esc(fr.semana)+'</td>'+
+        '<td style="'+DATECELL+'">'+esc(fr.fecha)+'</td>'+
+        '<td style="'+bg+'text-align:center">'+esc(fr.hora)+'</td>'+
+        '<td style="'+bg+'">'+esc(fr.lugar)+'</td>'+
+      '</tr>';
+  }
+  fechaHtml+='</table>';
+
+  // Tabla de asistentes (2 por fila, estilo referencia)
+  var asistHtml=
+    '<table style="width:100%;border-collapse:collapse;margin-top:12px;margin-bottom:0">'+
+    '<tr><th colspan="4" style="'+HEAD+'padding:7px 10px">TRABAJADORES CONVOCADOS &nbsp;('+asistRows.length+')</th></tr>'+
+    '<tr>'+
+      '<th style="'+SUBH+'">Nombre</th>'+
+      '<th style="'+SUBH+'width:160px">Encargado / Dpto</th>'+
+      '<th style="'+SUBH+'">Nombre</th>'+
+      '<th style="'+SUBH+'width:160px">Encargado / Dpto</th>'+
+    '</tr>';
+  if(asistRows.length){
+    for(var ri=0;ri<asistRows.length;ri+=2){
+      var a1=asistRows[ri], a2=asistRows[ri+1];
+      var rbg=ri%4===0?ROW0:ROW1;
+      asistHtml+='<tr>'+
+        '<td style="'+rbg+'font-weight:bold">'+esc(a1.nombre)+'</td>'+
+        '<td style="'+rbg+'color:#444">'+esc(a1.dept)+'</td>'+
+        '<td style="'+rbg+'font-weight:bold">'+(a2?esc(a2.nombre):'')+'</td>'+
+        '<td style="'+rbg+'color:#444">'+(a2?esc(a2.dept):'')+'</td>'+
+      '</tr>';
+    }
+  } else {
+    asistHtml+='<tr><td colspan="4" style="'+ROW0+'text-align:center;color:#999">Sin trabajadores asignados</td></tr>';
+  }
+  asistHtml+='</table>';
+
+  // Aviso
+  var avisoHtml=
+    '<table style="width:100%;border-collapse:collapse;margin-top:12px">'+
+    '<tr><td style="'+WARN+'">'+
+      '⚠ IMPORTANTE: Se ruega puntualidad. La F.L.C. exige el 100% de asistencia.'+
+      ' En caso de inspección, los ausentes serán eliminados del registro.'+
+    '</td></tr>'+
+    '</table>';
+
+  var firmaHtml='<p style="font-family:Arial,sans-serif;font-size:10pt;color:#555;margin-top:16px">'+
+    'Por favor, confirme su asistencia respondiendo a este correo.<br>'+
+    '<strong>Departamento de Prevención de Riesgos Laborales — GHDPRL</strong></p>';
+
+  var htmlBody='<div>'+avisoHtml+tituloHtml+fechaHtml+asistHtml+firmaHtml+'</div>';
+
+  var textPlain='[PRL] '+(f.titulo||'')+'\nSem.'+semana+' | '+fmtF(f.fecha)+' | '+(f.hora||'')+' | '+(f.lugar||'')+
+    '\nTrabajadores: '+asistRows.map(function(a){return a.nombre;}).join(', ');
+
+  var asunto='[PRL] Recordatorio de formación: '+(f.titulo||'').toUpperCase();
+
+  function abrirCompose(){
+    window.location.href='mailto:?subject='+encodeURIComponent(asunto);
+    setTimeout(function(){toast('✅ Tabla copiada — pega en el correo con Ctrl+V','#1a73e8');},400);
+  }
+
+  if(window.ClipboardItem && navigator.clipboard && navigator.clipboard.write){
+    var hBlob=new Blob([htmlBody],{type:'text/html'});
+    var tBlob=new Blob([textPlain],{type:'text/plain'});
+    navigator.clipboard.write([new ClipboardItem({'text/html':hBlob,'text/plain':tBlob})])
+      .then(abrirCompose)
+      .catch(function(){_fallbackCopyHtml(htmlBody,asunto);});
+  } else {
+    _fallbackCopyHtml(htmlBody,asunto);
+  }
+}
+
+function _fallbackCopyHtml(htmlBody,asunto){
+  var w=window.open('','_blank','width=820,height=640,menubar=no,toolbar=no,scrollbars=yes');
+  if(!w){toast('Activa las ventanas emergentes para este sitio','#f85149');return;}
+  w.document.write(
+    '<!DOCTYPE html><html><head><meta charset="utf-8"><title>Aviso PRL — Copiar tabla</title>'+
+    '<style>'+
+      'body{font-family:Arial,sans-serif;background:#f8f9fa;padding:24px;margin:0}'+
+      '.wrap{background:#fff;border-radius:8px;padding:24px;box-shadow:0 2px 8px rgba(0,0,0,.12)}'+
+      'h3{margin:0 0 6px;color:#1a1a1a;font-size:15px}'+
+      'p{margin:0 0 16px;color:#555;font-size:13px}'+
+      '.btn{display:inline-block;padding:10px 22px;background:#1a73e8;color:#fff;'+
+           'border:none;border-radius:6px;cursor:pointer;font-size:14px;font-weight:bold;'+
+           'margin-bottom:20px;font-family:Arial,sans-serif}'+
+      '.btn:hover{background:#1557b0}'+
+      'hr{border:none;border-top:1px solid #e0e0e0;margin:16px 0}'+
+    '</style></head><body>'+
+    '<div class="wrap">'+
+      '<h3>📋 Aviso de formación PRL</h3>'+
+      '<p>Pulsa el botón, luego abre Gmail y pega con <strong>Ctrl+V</strong> (o Cmd+V en Mac) en el cuerpo del correo.</p>'+
+      '<button class="btn" onclick="'+
+        'var r=document.createRange();r.selectNode(document.getElementById(\'content\'));'+
+        'window.getSelection().removeAllRanges();window.getSelection().addRange(r);'+
+        'document.execCommand(\'copy\');'+
+        'window.opener&&(window.opener.location.href=\'mailto:?subject='+encodeURIComponent(asunto)+'\');'+
+        'this.textContent=\'✅ Copiado — ya puedes pegar en Gmail\';'+
+      '">📋 Seleccionar y copiar tabla</button>'+
+      '<hr>'+
+      '<div id="content">'+htmlBody+'</div>'+
+    '</div></body></html>'
+  );
+  w.document.close();
 }
 
 // ── RENDER FORMACIONES ────────────────────────────────────────
