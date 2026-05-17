@@ -686,9 +686,10 @@ tbody td{padding:12px 18px;font-size:13px;vertical-align:middle;}
         <div class="stitle">Listado de Trabajadores</div>
         <button id="fab-config" onclick="openConfigModal()" title="Editar perfiles de formación"
           style="display:none;background:linear-gradient(135deg,#7b6fff,#00d4ff);
-                 border:none;border-radius:50%;width:40px;height:40px;cursor:pointer;
-                 font-size:18px;box-shadow:0 3px 12px rgba(123,111,255,.5);
-                 flex-shrink:0;transition:transform .2s">✏️</button>
+                 border:none;border-radius:50%;width:38px;height:38px;cursor:pointer;
+                 font-size:16px;box-shadow:0 3px 12px rgba(123,111,255,.5);
+                 flex-shrink:0;display:none;align-items:center;justify-content:center;
+                 line-height:1;padding:0;transition:transform .2s">✏️</button>
       </div>
       <div class="ssub">Gesti&#243;n de plantilla, estado formativo y aptitud m&#233;dica</div>
       <div class="twrap">
@@ -1349,7 +1350,10 @@ var FORM_REQ_DEFAULT = {
 };
 var FORM_PUESTO_DEFAULT = {
   'OBRA CIVIL': ['60h PRL','2°ALBANILERIA'],
-  'ELECTRICO':  ['60h PRL','2°ELECTRICIDAD']
+  'ELECTRICO':  ['60h PRL','2°ELECTRICIDAD'],
+  'OFICINA':    [],
+  'PRL':        [],
+  'ENCARGADO':  []
 };
 var FORM_BASICO_DEFAULT = {'60h PRL':true,'2°ELECTRICIDAD':true,'2°ALBANILERIA':true};
 var FORM_VOL_DEFAULT    = {'CONFINADOS':true};
@@ -4053,24 +4057,90 @@ function cfgTab(t){
   if(t==='caps')    renderCfgCaps();
   if(t==='basico')  renderCfgBasico();
 }
+// Recopila todas las formaciones conocidas en el sistema
+function getAllFormaciones(){
+  var all={};
+  Object.keys(FORM_PUESTO).forEach(function(p){(FORM_PUESTO[p]||[]).forEach(function(f){all[f]=true;});});
+  CAPS.forEach(function(cap){(FORM_REQ[cap.key]||[]).forEach(function(f){all[f]=true;});});
+  return Object.keys(all).sort();
+}
+
 function renderCfgPuestos(){
   var c=document.getElementById('cfg-puestos-list');if(!c)return;
+  var todasForms=getAllFormaciones();
   var html='';
+
   Object.keys(FORM_PUESTO).forEach(function(p){
+    var pid=p.replace(/[^a-zA-Z0-9]/g,'_');
     html+='<div style="background:rgba(17,26,62,.7);border:1px solid rgba(28,42,94,.7);border-radius:14px;padding:14px;margin-bottom:10px">';
+    // Header puesto
     html+='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">';
     html+='<div style="font-weight:700;font-size:13px;color:var(--acc)">🏗 '+esc(p)+'</div>';
     html+='<button class="btn btn-sm btn-d" onclick="cfgDelPuesto(\''+p.replace(/'/g,"\\'")+'\')" >✕ Eliminar puesto</button></div>';
-    html+='<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px">';
+    // Chips de formaciones actuales
+    html+='<div id="chips-'+pid+'" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px">';
     (FORM_PUESTO[p]||[]).forEach(function(f){
-      html+='<span style="display:inline-flex;align-items:center;gap:5px;background:rgba(123,111,255,.15);color:var(--acc3);border:1px solid rgba(123,111,255,.3);border-radius:20px;padding:3px 10px;font-size:11px;font-weight:600">'+esc(f)+'<button onclick="cfgDelFormPuesto(\''+p.replace(/'/g,"\\'")+'\',\''+f.replace(/'/g,"\\'")+'\')\" style="background:none;border:none;color:var(--danger);cursor:pointer;font-size:14px;padding:0;line-height:1">×</button></span>';
+      var isB=!!FORM_BASICO[f],isV=!!FORM_VOL[f];
+      var chipCol=isB?'rgba(255,77,109,.15)':'rgba(123,111,255,.15)';
+      var chipBrd=isB?'rgba(255,77,109,.35)':'rgba(123,111,255,.3)';
+      var chipTxt=isB?'var(--danger)':'var(--acc3)';
+      html+='<span style="display:inline-flex;align-items:center;gap:5px;background:'+chipCol+';color:'+chipTxt+';border:1px solid '+chipBrd+';border-radius:20px;padding:3px 10px;font-size:11px;font-weight:600">';
+      html+=esc(f);
+      if(isB) html+='<span style="font-size:9px;opacity:.7">(básica)</span>';
+      if(isV) html+='<span style="font-size:9px;color:var(--acc3)">(vol.)</span>';
+      html+='<button onclick="cfgDelFormPuesto(\''+p.replace(/'/g,"\\'")+'\',\''+f.replace(/'/g,"\\'")+'\')\" style="background:none;border:none;color:var(--danger);cursor:pointer;font-size:14px;padding:0;line-height:1">×</button>';
+      html+='</span>';
     });
-    if(!(FORM_PUESTO[p]||[]).length) html+='<span style="font-size:11px;color:var(--txm)">Sin formaciones asignadas</span>';
-    html+='</div><div style="display:flex;gap:6px"><input id="nfp-'+esc(p)+'" class="finput" placeholder="Nueva formación..." style="flex:1;font-size:12px"><button class="btn btn-p btn-sm" onclick="cfgAddFormPuesto(\''+p.replace(/'/g,"\\'")+'\')">+</button></div></div>';
+    if(!(FORM_PUESTO[p]||[]).length) html+='<span style="font-size:11px;color:var(--txm)">Sin formaciones requeridas</span>';
+    html+='</div>';
+    // Picker: elegir formación existente O escribir nueva
+    html+='<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">';
+    html+='<select id="sel-fp-'+pid+'" class="finput" style="flex:1;min-width:140px;font-size:12px" onchange="cfgPickerChange(\''+pid+'\')">';
+    html+='<option value="">— Elegir formación existente —</option>';
+    todasForms.forEach(function(f){
+      if((FORM_PUESTO[p]||[]).indexOf(f)<0){
+        html+='<option value="'+esc(f)+'">'+esc(f)+(FORM_BASICO[f]?' ★':'')+(FORM_VOL[f]?' ◯':'')+'</option>';
+      }
+    });
+    html+='<option value="__nueva__">✏️ Nueva formación...</option>';
+    html+='</select>';
+    html+='<input id="inp-fp-'+pid+'" class="finput" placeholder="Nombre nueva formación" style="display:none;flex:1;font-size:12px">';
+    html+='<button class="btn btn-p btn-sm" onclick="cfgAddFormPuesto(\''+p.replace(/'/g,"\\'")+'\',\''+pid+'\')">+ Añadir</button>';
+    html+='</div>';
+    html+='</div>';
   });
+
   if(!Object.keys(FORM_PUESTO).length) html='<div style="color:var(--txm);font-size:12px;padding:10px">Sin puestos configurados</div>';
+
+  // Sección: crear nueva formación y asignarla a varios puestos a la vez
+  html+='<div style="background:rgba(0,212,255,.05);border:1px solid rgba(0,212,255,.15);border-radius:14px;padding:14px;margin-top:14px">';
+  html+='<div style="font-size:11px;font-weight:700;color:var(--acc);margin-bottom:10px">⚡ Crear nueva formación y asignar a puestos</div>';
+  html+='<input id="nueva-form-global" class="finput" placeholder="Nombre de la nueva formación (ej: Trabajo en Altura 8h)" style="margin-bottom:10px;font-size:12px">';
+  html+='<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px">';
+  Object.keys(FORM_PUESTO).forEach(function(p){
+    var pid=p.replace(/[^a-zA-Z0-9]/g,'_');
+    html+='<label style="display:flex;align-items:center;gap:5px;font-size:11px;cursor:pointer;background:rgba(17,26,62,.7);border:1px solid rgba(28,42,94,.6);border-radius:8px;padding:5px 10px">';
+    html+='<input type="checkbox" id="chk-global-'+pid+'" style="accent-color:var(--acc)"> '+esc(p);
+    html+='</label>';
+  });
+  html+='</div>';
+  html+='<div style="display:flex;gap:8px;align-items:center">';
+  html+='<label style="display:flex;align-items:center;gap:5px;font-size:11px;cursor:pointer"><input type="checkbox" id="chk-global-basico" style="accent-color:var(--danger)"> <span style="color:var(--danger)">Marcar como básica</span></label>';
+  html+='<label style="display:flex;align-items:center;gap:5px;font-size:11px;cursor:pointer"><input type="checkbox" id="chk-global-vol" style="accent-color:var(--acc3)"> <span style="color:var(--acc3)">Voluntaria</span></label>';
+  html+='<button class="btn btn-p btn-sm" style="margin-left:auto" onclick="cfgCrearFormacionGlobal()">✅ Crear y asignar</button>';
+  html+='</div>';
+  html+='</div>';
+
   c.innerHTML=html;
 }
+
+// Muestra/oculta input texto cuando seleccionan "Nueva formación..."
+function cfgPickerChange(pid){
+  var sel=document.getElementById('sel-fp-'+pid);
+  var inp=document.getElementById('inp-fp-'+pid);
+  if(sel&&inp) inp.style.display=sel.value==='__nueva__'?'block':'none';
+}
+
 function renderCfgCaps(){
   var c=document.getElementById('cfg-caps-list');if(!c)return;
   var html='';
@@ -4110,8 +4180,45 @@ function renderCfgBasico(){
 }
 function cfgAddPuesto(){var inp=document.getElementById('cfg-new-puesto');var v=(inp.value||'').trim().toUpperCase();if(!v){toast('Escribe el nombre del puesto','#f85149');return;}if(FORM_PUESTO[v]){toast('Ya existe','#f85149');return;}FORM_PUESTO[v]=[];inp.value='';renderCfgPuestos();}
 function cfgDelPuesto(p){if(!confirm('¿Eliminar el puesto "'+p+'" y sus formaciones?'))return;delete FORM_PUESTO[p];renderCfgPuestos();}
-function cfgAddFormPuesto(p){var inp=document.getElementById('nfp-'+p);var v=(inp.value||'').trim();if(!v)return;if(!FORM_PUESTO[p])FORM_PUESTO[p]=[];if(FORM_PUESTO[p].indexOf(v)<0)FORM_PUESTO[p].push(v);inp.value='';renderCfgPuestos();}
+function cfgAddFormPuesto(p,pid){
+  var sel=document.getElementById('sel-fp-'+pid);
+  var inp=document.getElementById('inp-fp-'+pid);
+  var v='';
+  if(sel&&sel.value==='__nueva__'){
+    v=(inp?inp.value||'':'').trim();
+  } else {
+    v=sel?sel.value:'';
+  }
+  if(!v){toast('Selecciona o escribe una formación','#f85149');return;}
+  if(!FORM_PUESTO[p])FORM_PUESTO[p]=[];
+  if(FORM_PUESTO[p].indexOf(v)<0)FORM_PUESTO[p].push(v);
+  renderCfgPuestos();
+}
 function cfgDelFormPuesto(p,f){if(!FORM_PUESTO[p])return;FORM_PUESTO[p]=FORM_PUESTO[p].filter(function(x){return x!==f;});renderCfgPuestos();}
+
+// Crea una formación nueva y la asigna a los puestos marcados
+function cfgCrearFormacionGlobal(){
+  var inp=document.getElementById('nueva-form-global');
+  var v=(inp?inp.value||'':'').trim();
+  if(!v){toast('Escribe el nombre de la formación','#f85149');return;}
+  var isBasico=document.getElementById('chk-global-basico')&&document.getElementById('chk-global-basico').checked;
+  var isVol=document.getElementById('chk-global-vol')&&document.getElementById('chk-global-vol').checked;
+  var asignados=0;
+  Object.keys(FORM_PUESTO).forEach(function(p){
+    var pid=p.replace(/[^a-zA-Z0-9]/g,'_');
+    var chk=document.getElementById('chk-global-'+pid);
+    if(chk&&chk.checked){
+      if(!FORM_PUESTO[p])FORM_PUESTO[p]=[];
+      if(FORM_PUESTO[p].indexOf(v)<0){FORM_PUESTO[p].push(v);asignados++;}
+    }
+  });
+  if(isBasico)FORM_BASICO[v]=true;
+  if(isVol)FORM_VOL[v]=true;
+  if(asignados===0){toast('Marca al menos un puesto donde asignarla','#f85149');return;}
+  if(inp)inp.value='';
+  toast('✅ "'+v+'" añadida a '+asignados+' puesto'+(asignados===1?'':'s'),'#00d4ff');
+  renderCfgPuestos();
+}
 function cfgAddCap(){var inp=document.getElementById('cfg-new-cap');var col=document.getElementById('cfg-new-cap-col').value;var v=(inp.value||'').trim().toUpperCase();if(!v){toast('Escribe el nombre','#f85149');return;}if(CAPS.some(function(c){return c.key===v;})){toast('Ya existe','#f85149');return;}CAPS.push({key:v,col:col});FORM_REQ[v]=[];inp.value='';renderCfgCaps();}
 function cfgDelCap(key){if(!confirm('¿Eliminar "'+key+'"?'))return;CAPS=CAPS.filter(function(c){return c.key!==key;});delete FORM_REQ[key];renderCfgCaps();}
 function cfgAddFormCap(key){var inp=document.getElementById('nfc-'+key);var v=(inp.value||'').trim();if(!v)return;if(!FORM_REQ[key])FORM_REQ[key]=[];if(FORM_REQ[key].indexOf(v)<0)FORM_REQ[key].push(v);inp.value='';renderCfgCaps();}
@@ -4212,7 +4319,8 @@ function cfgReset(){
 }
 function initFab(){
   var fab=document.getElementById('fab-config');
-  if(fab) fab.style.display=isAdmin()?'flex':'none';
+  if(!fab) return;
+  fab.style.display=isAdmin()?'inline-flex':'none';
 }
 
 
