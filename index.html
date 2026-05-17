@@ -1365,8 +1365,8 @@ var FORM_BASICO = JSON.parse(JSON.stringify(FORM_BASICO_DEFAULT));
 var FORM_VOL    = JSON.parse(JSON.stringify(FORM_VOL_DEFAULT));
 
 // ── Configuración de envío de email (Google Apps Script Web App) ──
-var GAS_ENDPOINT = 'https://script.google.com/macros/s/AKfycby3HGS1cXi4PkwsunSekSaSWLStLK7PHSe3uAtar_RcGCEE6mbLzfZ78dxbjt2ZB72oDQ/exec';
-var GAS_CC       = 'guillermo.herrero@elecnor.es'; // CC por defecto
+var GAS_ENDPOINT = 'https://script.google.com/macros/s/AKfycbz-c0neucWNpJkUwmLxpfwFN_and9MGTlyLiqrUgf6ktox77r2DJjj0wIxqBssa9QWKeQ/exec';
+var GAS_CC       = 'guilleherdo@gmail.com'; // CC por defecto
 
 // Carga configuración personalizada desde Firebase
 function loadFormConfig(){
@@ -2332,8 +2332,8 @@ function doSendFormacion(id){
     // Envío real via Apps Script
     fetch(GAS_ENDPOINT,{
       method:'POST',
-      body:JSON.stringify(payload),
-      headers:{'Content-Type':'application/json'}
+      body:JSON.stringify(payload)
+      // Sin Content-Type → texto plano → sin preflight CORS → Apps Script lo acepta
     })
     .then(function(r){return r.json();})
     .then(function(res){
