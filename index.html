@@ -1364,6 +1364,10 @@ var FORM_PUESTO = JSON.parse(JSON.stringify(FORM_PUESTO_DEFAULT));
 var FORM_BASICO = JSON.parse(JSON.stringify(FORM_BASICO_DEFAULT));
 var FORM_VOL    = JSON.parse(JSON.stringify(FORM_VOL_DEFAULT));
 
+// ── Configuración de envío de email (Google Apps Script Web App) ──
+var GAS_ENDPOINT = 'https://script.google.com/macros/s/AKfycby3HGS1cXi4PkwsunSekSaSWLStLK7PHSe3uAtar_RcGCEE6mbLzfZ78dxbjt2ZB72oDQ/exec';
+var GAS_CC       = 'guillermo.herrero@elecnor.es'; // CC por defecto
+
 // Carga configuración personalizada desde Firebase
 function loadFormConfig(){
   if(!_authToken) return;
@@ -1376,6 +1380,8 @@ function loadFormConfig(){
       if(cfg.form_basico) FORM_BASICO = cfg.form_basico;
       if(cfg.form_vol)    FORM_VOL    = cfg.form_vol;
       if(cfg.caps_list)   syncCapsFromConfig(cfg.caps_list);
+      if(cfg.gas_endpoint) GAS_ENDPOINT = cfg.gas_endpoint;
+      if(cfg.gas_cc)       GAS_CC       = cfg.gas_cc;
     }).catch(function(){});
 }
 
@@ -1385,7 +1391,9 @@ function saveFormConfig(){
     form_puesto: FORM_PUESTO,
     form_basico: FORM_BASICO,
     form_vol:    FORM_VOL,
-    caps_list:   CAPS.map(function(c){return {key:c.key,col:c.col};})
+    caps_list:   CAPS.map(function(c){return {key:c.key,col:c.col};}),
+    gas_endpoint: GAS_ENDPOINT,
+    gas_cc:       GAS_CC
   };
   fetch(fbUrl('/configuracion/formreqs.json'),{method:'PUT',body:JSON.stringify(cfg)}).catch(function(){});
 }
@@ -2234,155 +2242,158 @@ function renderTrabajadores(busq) {
   tbody.innerHTML=html;
 }
 
-// ── GMAIL AVISO FORMACIÓN — HTML clipboard ────────────────────
+// ── MODAL AVISAR FORMACIÓN ────────────────────────────────────
+// Muestra un modal para introducir destinatarios antes de enviar
 function gmailFormacion(id){
   var f=findById(formaciones,id);
   if(!f){toast('Formación no encontrada','#f85149');return;}
 
+  // Construye HTML del modal de envío
+  var asistNombres=(f.asistIds||[]).map(function(tid){
+    var t=findById(trabajadores,tid);return t?t.nombre:'';
+  }).filter(Boolean);
+
+  var overlay=document.getElementById('mail-overlay');
+  if(!overlay){
+    overlay=document.createElement('div');
+    overlay.id='mail-overlay';
+    overlay.style.cssText='display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:600;align-items:center;justify-content:center;backdrop-filter:blur(8px)';
+    document.body.appendChild(overlay);
+  }
+  overlay.innerHTML=
+    '<div style="background:linear-gradient(135deg,rgba(10,14,45,.99),rgba(15,22,65,.97));border:1px solid rgba(28,42,110,.9);border-radius:24px;padding:28px;width:92%;max-width:500px;position:relative;box-shadow:0 24px 80px rgba(0,0,0,.7)">' +
+      '<button onclick="document.getElementById(\'mail-overlay\').style.display=\'none\'" style="position:absolute;top:14px;right:14px;background:rgba(17,26,62,.8);border:1px solid rgba(28,42,94,.8);color:var(--txm);width:30px;height:30px;border-radius:8px;cursor:pointer;font-size:15px">✕</button>' +
+      '<div style="font-family:\'Syne\',sans-serif;font-size:17px;font-weight:700;margin-bottom:4px">📧 Enviar aviso</div>' +
+      '<div style="font-size:12px;color:var(--txm);margin-bottom:18px">'+esc(f.titulo)+'</div>' +
+      (asistNombres.length?'<div style="background:rgba(17,26,62,.7);border-radius:10px;padding:10px 12px;margin-bottom:14px;font-size:11px;color:var(--txm)">👥 '+asistNombres.length+' convocados: '+esc(asistNombres.slice(0,4).join(', '))+(asistNombres.length>4?'...':'')+'</div>':'')+
+      '<label class="flabel">Destinatarios <span style="color:var(--danger)">*</span></label>' +
+      '<input id="mail-to" class="finput" type="text" placeholder="email1@empresa.com, email2@empresa.com" style="margin-bottom:10px">' +
+      '<div style="font-size:10px;color:var(--txm);margin-bottom:14px">Varios emails separados por coma</div>' +
+      '<label class="flabel">CC (copia)</label>' +
+      '<input id="mail-cc" class="finput" type="text" placeholder="'+esc(GAS_CC)+'" value="'+esc(GAS_CC)+'" style="margin-bottom:18px">' +
+      (GAS_ENDPOINT?
+        '<div style="font-size:10px;color:var(--acc);margin-bottom:12px">✅ Apps Script configurado — el email se enviará automáticamente</div>':
+        '<div style="font-size:10px;color:var(--acc4);margin-bottom:12px">⚠️ Apps Script no configurado — se copiará la tabla al portapapeles (pégala en Gmail con Ctrl+V)</div>')+
+      '<div style="display:flex;gap:10px">' +
+        '<button class="btn btn-g" style="flex:1" onclick="document.getElementById(\'mail-overlay\').style.display=\'none\'">Cancelar</button>' +
+        '<button class="btn btn-p" style="flex:2" id="mail-send-btn" onclick="doSendFormacion(\''+id+'\')">'+
+          (GAS_ENDPOINT?'📨 Enviar email':'📋 Copiar y abrir Gmail')+'</button>' +
+      '</div>' +
+    '</div>';
+  overlay.style.display='flex';
+}
+
+// Ejecuta el envío real
+function doSendFormacion(id){
+  var f=findById(formaciones,id);if(!f)return;
+  var to=(document.getElementById('mail-to').value||'').trim();
+  var cc=(document.getElementById('mail-cc').value||'').trim()||GAS_CC;
+  if(!to){toast('Introduce al menos un destinatario','#f85149');return;}
+
+  var btn=document.getElementById('mail-send-btn');
+  if(btn){btn.disabled=true;btn.textContent='⏳ Enviando...';}
+
+  // Prepara payload
   var estAuto=calcEstadoAuto({fecha:f.fecha,dias:parseInt(f.dias||1),estado:f.estado||'aprobada'});
   var estLabels={solicitada:'SOLICITADA',aprobada:'PROGRAMADA',encurso:'EN CURSO',cerrada:'FINALIZADA'};
-
   function getWeek(ds){var d=new Date(ds+'T12:00:00');var j=new Date(d.getFullYear(),0,1);return Math.ceil((((d-j)/86400000)+j.getDay()+1)/7);}
   function fmtF(ds){if(!ds)return 'Por confirmar';return new Date(ds+'T12:00:00').toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long',year:'numeric'});}
 
-  var semana=f.fecha?getWeek(f.fecha):'-';
-
-  // Filas de fechas
-  var filasFecha=[];
+  var fechas=[],horarios=[],lugares=[];
   if(f.dias&&parseInt(f.dias)>1&&f.fechas&&f.fechas.length>1){
     for(var d=0;d<parseInt(f.dias);d++){
-      filasFecha.push({
-        semana:d===0?'Sem. '+semana:'',
-        fecha:fmtF(f.fechas[d]||f.fecha),
-        hora:(f.horarios&&f.horarios[d])||f.hora||'Por confirmar',
-        lugar:(f.lugares&&f.lugares[d])||f.lugar||'Por confirmar'
-      });
+      fechas.push(fmtF(f.fechas[d]||f.fecha));
+      horarios.push((f.horarios&&f.horarios[d])||f.hora||'Por confirmar');
+      lugares.push((f.lugares&&f.lugares[d])||f.lugar||'Por confirmar');
     }
   } else {
-    filasFecha.push({semana:'Sem. '+semana,fecha:fmtF(f.fecha),hora:f.hora||'Por confirmar',lugar:f.lugar||'Por confirmar'});
+    fechas=[fmtF(f.fecha)];
+    horarios=[f.hora||'Por confirmar'];
+    lugares=[f.lugar||'Por confirmar'];
   }
+  var asistentes=[];
+  (f.asistIds||[]).forEach(function(tid){
+    var t=findById(trabajadores,tid);
+    if(t) asistentes.push({nombre:t.nombre||'',puesto:t.puesto||'',dept:t.dept||''});
+  });
+  var payload={
+    to:to, cc:cc,
+    asunto:'[PRL] Recordatorio de formación: '+(f.titulo||'').toUpperCase(),
+    titulo:f.titulo||'',
+    estado:estLabels[estAuto]||'',
+    tipo:f.tipo||'obligatorio',
+    semana:f.fecha?getWeek(f.fecha):'-',
+    dias:parseInt(f.dias||1),
+    fechas:fechas, horarios:horarios, lugares:lugares,
+    asistentes:asistentes
+  };
 
-  // Filas de asistentes
-  var asistRows=[];
-  if(f.asistIds&&f.asistIds.length){
-    for(var ai=0;ai<f.asistIds.length;ai++){
-      var tw=findById(trabajadores,f.asistIds[ai]);
-      if(tw) asistRows.push({nombre:tw.nombre||'',puesto:tw.puesto||'',dept:tw.dept||'Sin encargado'});
-    }
+  if(GAS_ENDPOINT){
+    // Envío real via Apps Script
+    fetch(GAS_ENDPOINT,{
+      method:'POST',
+      body:JSON.stringify(payload),
+      headers:{'Content-Type':'application/json'}
+    })
+    .then(function(r){return r.json();})
+    .then(function(res){
+      document.getElementById('mail-overlay').style.display='none';
+      if(res.ok){
+        toast('✅ Email enviado correctamente','#00d4ff');
+        addAct('g','📧','Aviso formación enviado: '+f.titulo);
+      } else {
+        toast('❌ Error: '+(res.error||'desconocido'),'#f85149');
+      }
+    })
+    .catch(function(err){
+      toast('❌ Error de conexión con el Apps Script','#f85149');
+      if(btn){btn.disabled=false;btn.textContent='📨 Enviar email';}
+    });
+  } else {
+    // Fallback: copia HTML al portapapeles
+    document.getElementById('mail-overlay').style.display='none';
+    _buildAndCopyHtml(payload);
   }
+}
 
-  // ── Estilos Google Sheets ──────────────────────────────────
-  var CELL='border:1px solid #000000;padding:5px 8px;font-size:10pt;font-family:Arial,sans-serif;';
-  var HEAD=CELL+'background:#1a73e8;color:#ffffff;font-weight:bold;text-align:center;';          // azul Google
-  var SUBH=CELL+'background:#c9daf8;color:#000000;font-weight:bold;';                            // azul claro
-  var WARN=CELL+'background:#fce8b2;color:#7f4c00;font-weight:bold;text-align:center;';          // amarillo aviso
+// Fallback: construye HTML y lo copia al portapapeles
+function _buildAndCopyHtml(d){
+  var CELL='border:1px solid #000000;padding:6px 10px;font-size:10pt;font-family:Arial,sans-serif;';
+  var HEAD=CELL+'background:#1a73e8;color:#ffffff;font-weight:bold;text-align:center;';
+  var SUBH=CELL+'background:#c9daf8;color:#000000;font-weight:bold;';
+  var WARN=CELL+'background:#fce8b2;color:#7f4c00;font-weight:bold;text-align:center;';
   var ROW0=CELL+'background:#ffffff;';
   var ROW1=CELL+'background:#f3f3f3;';
-  var DATECELL=CELL+'background:#d9ead3;font-weight:bold;';  // verde fecha (como Google Sheets)
-
-  // Título grande
-  var tituloHtml=
-    '<table style="width:100%;border-collapse:collapse;margin-bottom:0">'  +
-    '<tr><td colspan="4" style="'+HEAD+'font-size:12pt;letter-spacing:.3px;padding:8px 10px">'+
-      esc((f.titulo||'').toUpperCase())+
-    '</td></tr>'+
-    '<tr>'+
-      '<td style="'+SUBH+'width:100px">Estado</td>'+
-      '<td style="'+ROW0+'">'+esc(estLabels[estAuto]||'')+'</td>'+
-      '<td style="'+SUBH+'width:80px">Tipo</td>'+
-      '<td style="'+ROW0+'">'+esc(f.tipo==='obligatorio'?'OBLIGATORIA':'Voluntaria')+'</td>'+
-    '</tr>'+
-    (parseInt(f.dias)>1?
-      '<tr>'+
-        '<td style="'+SUBH+'">Duración</td>'+
-        '<td colspan="3" style="'+ROW0+'">'+parseInt(f.dias)+' días</td>'+
-      '</tr>':'')+
-    '</table>';
-
-  // Tabla de fechas
-  var fechaHtml=
-    '<table style="width:100%;border-collapse:collapse;margin-top:12px;margin-bottom:0">'+
-    '<tr>'+
-      '<th style="'+HEAD+'width:90px">Semana</th>'+
-      '<th style="'+HEAD+'">Fecha de impartición</th>'+
-      '<th style="'+HEAD+'width:150px">Horario</th>'+
-      '<th style="'+HEAD+'">Lugar de impartición</th>'+
-    '</tr>';
-  for(var fi=0;fi<filasFecha.length;fi++){
-    var fr=filasFecha[fi];
-    var bg=fi%2===0?ROW0:ROW1;
-    fechaHtml+=
-      '<tr>'+
-        '<td style="'+bg+'text-align:center;font-weight:bold">'+esc(fr.semana)+'</td>'+
-        '<td style="'+DATECELL+'">'+esc(fr.fecha)+'</td>'+
-        '<td style="'+bg+'text-align:center">'+esc(fr.hora)+'</td>'+
-        '<td style="'+bg+'">'+esc(fr.lugar)+'</td>'+
-      '</tr>';
+  var DATE_=CELL+'background:#d9ead3;font-weight:bold;color:#1a4d1a;';
+  var filasFecha='';
+  for(var i=0;i<d.fechas.length;i++){
+    var bg=i%2===0?ROW0:ROW1;
+    filasFecha+='<tr><td style="'+bg+'text-align:center;font-weight:bold">'+(i===0?'Sem.&nbsp;'+d.semana:'')+'</td><td style="'+DATE_+'">'+d.fechas[i]+'</td><td style="'+bg+'text-align:center">'+d.horarios[i]+'</td><td style="'+bg+'">'+d.lugares[i]+'</td></tr>';
   }
-  fechaHtml+='</table>';
+  var filasAsis='';
+  if(!d.asistentes.length){filasAsis='<tr><td colspan="4" style="'+ROW0+'text-align:center;color:#888">Sin trabajadores asignados</td></tr>';}
+  else{for(var j=0;j<d.asistentes.length;j+=2){var a1=d.asistentes[j],a2=d.asistentes[j+1],rbg=j%4===0?ROW0:ROW1;filasAsis+='<tr><td style="'+rbg+'font-weight:bold">'+(a1.nombre||'')+'</td><td style="'+rbg+'color:#555">'+(a1.dept||'')+'</td><td style="'+rbg+'font-weight:bold">'+(a2?a2.nombre||'':'')+'</td><td style="'+rbg+'color:#555">'+(a2?a2.dept||'':'')+'</td></tr>';}}
+  var tipo=d.tipo==='obligatorio'?'OBLIGATORIA &mdash; Asistencia 100% requerida':'Voluntaria';
+  var htmlBody='<div style="font-family:Arial,sans-serif;font-size:11pt;color:#1a1a1a;max-width:750px">'+
+    '<table style="width:100%;border-collapse:collapse;margin-bottom:14px"><tr><td style="'+WARN+'">&#9888; <strong>IMPORTANTE:</strong> Se ruega puntualidad. La F.L.C. exige el <strong>100% de asistencia</strong>; en caso de inspecci&oacute;n, los ausentes ser&aacute;n eliminados del registro.</td></tr></table>'+
+    '<table style="width:100%;border-collapse:collapse;margin-bottom:0"><tr><td style="'+HEAD+'font-size:12pt;padding:8px 10px">'+d.titulo.toUpperCase()+'</td></tr>'+
+    '<tr><td style="'+SUBH+'width:100px">Estado</td><td style="'+ROW0+'">'+d.estado+'</td><td style="'+SUBH+'width:80px">Tipo</td><td style="'+ROW0+'">'+tipo+'</td></tr>'+
+    (d.dias>1?'<tr><td style="'+SUBH+'">Duraci&oacute;n</td><td colspan="3" style="'+ROW0+'">'+d.dias+' d&iacute;as</td></tr>':'')+
+    '</table>'+
+    '<table style="width:100%;border-collapse:collapse;margin-top:12px"><thead><tr><th style="'+HEAD+'width:90px">Semana</th><th style="'+HEAD+'">Fecha de impartici&oacute;n</th><th style="'+HEAD+'width:150px">Horario</th><th style="'+HEAD+'">Lugar de impartici&oacute;n</th></tr></thead><tbody>'+filasFecha+'</tbody></table>'+
+    '<table style="width:100%;border-collapse:collapse;margin-top:12px"><thead><tr><th colspan="4" style="'+HEAD+'padding:7px 10px">TRABAJADORES CONVOCADOS ('+d.asistentes.length+')</th></tr><tr><th style="'+SUBH+'">Nombre</th><th style="'+SUBH+'width:160px">Encargado / Dpto</th><th style="'+SUBH+'">Nombre</th><th style="'+SUBH+'width:160px">Encargado / Dpto</th></tr></thead><tbody>'+filasAsis+'</tbody></table>'+
+    '<p style="margin-top:18px;color:#555;font-size:10pt">Por favor, confirme su asistencia respondiendo a este correo.<br><strong>Departamento de Prevenci&oacute;n de Riesgos Laborales &mdash; GHDPRL</strong></p></div>';
 
-  // Tabla de asistentes (2 por fila, estilo referencia)
-  var asistHtml=
-    '<table style="width:100%;border-collapse:collapse;margin-top:12px;margin-bottom:0">'+
-    '<tr><th colspan="4" style="'+HEAD+'padding:7px 10px">TRABAJADORES CONVOCADOS &nbsp;('+asistRows.length+')</th></tr>'+
-    '<tr>'+
-      '<th style="'+SUBH+'">Nombre</th>'+
-      '<th style="'+SUBH+'width:160px">Encargado / Dpto</th>'+
-      '<th style="'+SUBH+'">Nombre</th>'+
-      '<th style="'+SUBH+'width:160px">Encargado / Dpto</th>'+
-    '</tr>';
-  if(asistRows.length){
-    for(var ri=0;ri<asistRows.length;ri+=2){
-      var a1=asistRows[ri], a2=asistRows[ri+1];
-      var rbg=ri%4===0?ROW0:ROW1;
-      asistHtml+='<tr>'+
-        '<td style="'+rbg+'font-weight:bold">'+esc(a1.nombre)+'</td>'+
-        '<td style="'+rbg+'color:#444">'+esc(a1.dept)+'</td>'+
-        '<td style="'+rbg+'font-weight:bold">'+(a2?esc(a2.nombre):'')+'</td>'+
-        '<td style="'+rbg+'color:#444">'+(a2?esc(a2.dept):'')+'</td>'+
-      '</tr>';
-    }
-  } else {
-    asistHtml+='<tr><td colspan="4" style="'+ROW0+'text-align:center;color:#999">Sin trabajadores asignados</td></tr>';
-  }
-  asistHtml+='</table>';
-
-  // Aviso
-  var avisoHtml=
-    '<table style="width:100%;border-collapse:collapse;margin-top:12px">'+
-    '<tr><td style="'+WARN+'">'+
-      '⚠ IMPORTANTE: Se ruega puntualidad. La F.L.C. exige el 100% de asistencia.'+
-      ' En caso de inspección, los ausentes serán eliminados del registro.'+
-    '</td></tr>'+
-    '</table>';
-
-  var firmaHtml='<p style="font-family:Arial,sans-serif;font-size:10pt;color:#555;margin-top:16px">'+
-    'Por favor, confirme su asistencia respondiendo a este correo.<br>'+
-    '<strong>Departamento de Prevención de Riesgos Laborales — GHDPRL</strong></p>';
-
-  var htmlBody='<div>'+avisoHtml+tituloHtml+fechaHtml+asistHtml+firmaHtml+'</div>';
-
-  var textPlain='[PRL] '+(f.titulo||'')+'\nSem.'+semana+' | '+fmtF(f.fecha)+' | '+(f.hora||'')+' | '+(f.lugar||'')+
-    '\nTrabajadores: '+asistRows.map(function(a){return a.nombre;}).join(', ');
-
-  var asunto='[PRL] Recordatorio de formación: '+(f.titulo||'').toUpperCase();
-
-  function abrirCompose(){
-    window.location.href='mailto:?subject='+encodeURIComponent(asunto);
-    setTimeout(function(){toast('✅ Tabla copiada — pega en el correo con Ctrl+V','#1a73e8');},400);
-  }
-
-  if(window.ClipboardItem && navigator.clipboard && navigator.clipboard.write){
+  var asunto=d.asunto;
+  function abrirCompose(){window.location.href='mailto:?subject='+encodeURIComponent(asunto);setTimeout(function(){toast('✅ Tabla copiada — pega en Gmail con Ctrl+V','#1a73e8');},400);}
+  if(window.ClipboardItem&&navigator.clipboard&&navigator.clipboard.write){
     var hBlob=new Blob([htmlBody],{type:'text/html'});
-    var tBlob=new Blob([textPlain],{type:'text/plain'});
-    navigator.clipboard.write([new ClipboardItem({'text/html':hBlob,'text/plain':tBlob})])
-      .then(abrirCompose)
-      .catch(function(){_fallbackCopyHtml(htmlBody,asunto);});
+    var tBlob=new Blob([asunto],{type:'text/plain'});
+    navigator.clipboard.write([new ClipboardItem({'text/html':hBlob,'text/plain':tBlob})]).then(abrirCompose).catch(function(){_fallbackCopyHtml(htmlBody,asunto);});
   } else {
     _fallbackCopyHtml(htmlBody,asunto);
   }
 }
-
 function _fallbackCopyHtml(htmlBody,asunto){
   var w=window.open('','_blank','width=820,height=640,menubar=no,toolbar=no,scrollbars=yes');
   if(!w){toast('Activa las ventanas emergentes para este sitio','#f85149');return;}
@@ -4053,7 +4064,7 @@ function openConfigModal(){
 function closeConfigModal(){document.getElementById('modal-config-form').classList.remove('open');}
 function cfgTab(t){
   _cfgTab=t;
-  ['puestos','caps','basico'].forEach(function(id){
+  ['puestos','caps','basico','email'].forEach(function(id){
     var el=document.getElementById('cfg-'+id);
     if(el) el.style.display=id===t?'block':'none';
     var btn=document.getElementById('cfgtab-'+id);
@@ -4062,6 +4073,12 @@ function cfgTab(t){
   if(t==='puestos') renderCfgPuestos();
   if(t==='caps')    renderCfgCaps();
   if(t==='basico')  renderCfgBasico();
+  if(t==='email'){
+    var u=document.getElementById('cfg-gas-url');
+    var c=document.getElementById('cfg-gas-cc');
+    if(u) u.value=GAS_ENDPOINT||'';
+    if(c) c.value=GAS_CC||'';
+  }
 }
 // Recopila todas las formaciones conocidas en el sistema
 // Master list: incluye TODAS las formaciones conocidas (puestos + caps + básicos)
@@ -4321,15 +4338,28 @@ function recalcularTodosLosTrabajadores(){
 }
 
 function cfgSave(){
+  var u=document.getElementById('cfg-gas-url');
+  var c=document.getElementById('cfg-gas-cc');
+  if(u) GAS_ENDPOINT=u.value.trim();
+  if(c&&c.value.trim()) GAS_CC=c.value.trim();
   saveFormConfig();
-  // Reconstruye selects con los nuevos puestos
   buildPuestoSelect();
-  // Recalcula todos los trabajadores con la nueva configuración
   recalcularTodosLosTrabajadores();
   toast('✅ Configuración guardada','#00d4ff');
   closeConfigModal();
   renderAll();
   updateBadgeFP();
+}
+function cfgTestEmail(){
+  var u=(document.getElementById('cfg-gas-url')||{value:''}).value.trim();
+  var res=document.getElementById('cfg-gas-test-result');
+  if(!u){if(res)res.textContent='⚠️ Introduce primero la URL';return;}
+  if(res){res.style.color='var(--txm)';res.textContent='⏳ Probando...';}
+  fetch(u).then(function(r){return r.text();}).then(function(txt){
+    if(res){res.style.color=txt.includes('OK')?'var(--acc)':'var(--acc4)';res.textContent=txt.includes('OK')?'✅ Conexión OK':'⚠️ '+txt.slice(0,50);}
+  }).catch(function(){
+    if(res){res.style.color='var(--danger)';res.textContent='❌ No se pudo conectar';}
+  });
 }
 function cfgReset(){
   if(!confirm('¿Restaurar valores por defecto? Se perderán los cambios.'))return;
@@ -4361,6 +4391,7 @@ function initFab(){
       <button id="cfgtab-puestos" class="btn btn-p btn-sm" onclick="cfgTab('puestos')">🏗 Puestos</button>
       <button id="cfgtab-caps"    class="btn btn-g btn-sm" onclick="cfgTab('caps')">🎖 Capacitaciones</button>
       <button id="cfgtab-basico"  class="btn btn-g btn-sm" onclick="cfgTab('basico')">📌 Básicos / Voluntarios</button>
+      <button id="cfgtab-email"   class="btn btn-g btn-sm" onclick="cfgTab('email')">📧 Email</button>
     </div>
     <div id="cfg-puestos">
       <div style="font-size:11px;color:var(--txm);margin-bottom:12px">Formaciones exigidas a todos los trabajadores de ese puesto, independientemente de sus capacitaciones.</div>
@@ -4386,11 +4417,39 @@ function initFab(){
     </div>
     <div id="cfg-basico" style="display:none">
       <div style="font-size:11px;color:var(--txm);margin-bottom:12px">
-        <strong>Básico (rojo):</strong> Formación imprescindible para el puesto. &nbsp;
-        <strong>Voluntaria (azul):</strong> Recomendada, no obligatoria.
+        <strong>Básico (★):</strong> Formación imprescindible para el puesto. &nbsp;
+        <strong>Voluntaria (💠):</strong> Recomendada, no obligatoria.
       </div>
       <div id="cfg-basico-list"></div>
     </div>
+
+    <div id="cfg-email" style="display:none">
+      <div style="font-size:11px;color:var(--txm);margin-bottom:14px;background:rgba(0,212,255,.06);border:1px solid rgba(0,212,255,.15);border-radius:10px;padding:12px;line-height:1.7">
+        Con la URL configurada, el botón <strong>Avisar</strong> envía el email directamente.<br>
+        Sin URL, seguirá usando el método de portapapeles (copiar y pegar en Gmail).<br>
+        <span style="color:var(--acc);cursor:pointer" onclick="window.open('https://script.google.com','_blank')">→ Crear proyecto en script.google.com</span>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <div>
+          <label class="flabel">URL del Apps Script (Web App)</label>
+          <input id="cfg-gas-url" class="finput" type="url"
+            placeholder="https://script.google.com/macros/s/XXXXXXX/exec"
+            style="font-size:12px">
+          <div style="font-size:10px;color:var(--txm);margin-top:4px">Apps Script → Implementar → Nueva implementación → Aplicación web → "Cualquier usuario"</div>
+        </div>
+        <div>
+          <label class="flabel">CC por defecto (siempre en copia)</label>
+          <input id="cfg-gas-cc" class="finput" type="text"
+            placeholder="responsable@empresa.com"
+            style="font-size:12px">
+        </div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <button class="btn btn-g btn-sm" onclick="cfgTestEmail()">🧪 Probar conexión</button>
+          <span id="cfg-gas-test-result" style="font-size:11px;color:var(--txm)"></span>
+        </div>
+      </div>
+    </div>
+
     <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:18px;border-top:1px solid rgba(28,42,94,.5);padding-top:14px">
       <button class="btn btn-g btn-sm" onclick="cfgReset()">↩ Restaurar por defecto</button>
       <button class="btn btn-p" onclick="cfgSave()">💾 Guardar cambios</button>
