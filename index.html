@@ -642,11 +642,6 @@ tbody td{padding:12px 18px;font-size:13px;vertical-align:middle;}
         </div>
         <select class="fbtn" id="fp-puesto" onchange="renderFormPendientes()" style="font-size:12px;padding:7px 12px">
           <option value="">Todos los puestos</option>
-          <option>OBRA CIVIL</option>
-          <option>ELECTRICO</option>
-          <option>OFICINA</option>
-          <option>PRL</option>
-          <option>ENCARGADO</option>
         </select>
         <select class="fbtn" id="fp-encargado" onchange="renderFormPendientes()" style="font-size:12px;padding:7px 12px">
           <option value="">Todos los encargados</option>
@@ -687,7 +682,14 @@ tbody td{padding:12px 18px;font-size:13px;vertical-align:middle;}
 
     <!-- TRABAJADORES -->
     <div class="page" id="page-trabajadores">
-      <div class="stitle">Listado de Trabajadores</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:2px">
+        <div class="stitle">Listado de Trabajadores</div>
+        <button id="fab-config" onclick="openConfigModal()" title="Editar perfiles de formación"
+          style="display:none;background:linear-gradient(135deg,#7b6fff,#00d4ff);
+                 border:none;border-radius:50%;width:40px;height:40px;cursor:pointer;
+                 font-size:18px;box-shadow:0 3px 12px rgba(123,111,255,.5);
+                 flex-shrink:0;transition:transform .2s">✏️</button>
+      </div>
       <div class="ssub">Gesti&#243;n de plantilla, estado formativo y aptitud m&#233;dica</div>
       <div class="twrap">
         <div class="ttbar">
@@ -798,7 +800,7 @@ tbody td{padding:12px 18px;font-size:13px;vertical-align:middle;}
     <div class="fgrid">
       <div class="full"><label class="flabel">Nombre completo *</label><input class="finput" id="w-nombre" type="text" placeholder="Ej: Ana Garc&#237;a L&#243;pez"></div>
       <div><label class="flabel">Encargado</label><select class="finput" id="w-dept"><option value="">No aplica</option></select></div>
-      <div><label class="flabel">Puesto *</label><select class="finput" id="w-puesto"><option value="">Seleccionar...</option><option value="OBRA CIVIL">OBRA CIVIL</option><option value="ELECTRICO">EL&#201;CTRICO</option><option value="OFICINA">OFICINA</option><option value="PRL">PRL</option><option value="ENCARGADO">ENCARGADO</option></select></div>
+      <div><label class="flabel">Puesto *</label><select class="finput" id="w-puesto"><option value="">Seleccionar...</option></select></div>
       <div><label class="flabel">Fecha incorporaci&#243;n</label><input class="finput" id="w-fecha" type="date"></div>
       <div><label class="flabel">Formaci&#243;n PRL</label><select class="finput" id="w-form"><option value="pendiente">Pendiente</option><option value="ok">Completada</option></select></div>
       <div><label class="flabel">Aptitud m&#233;dica</label><select class="finput" id="w-med"><option value="pendiente">Pendiente</option><option value="apto">Apto/a</option><option value="no-apto">No apto/a</option></select></div>
@@ -3632,6 +3634,7 @@ function renderEnlaces(){
 }
 
 function renderAll() {
+  buildPuestoSelect(); // mantiene selects de puesto sincronizados con la config
   renderTrabajadores();
   renderCalendario();
   renderFormaciones();
@@ -4115,7 +4118,86 @@ function cfgAddFormCap(key){var inp=document.getElementById('nfc-'+key);var v=(i
 function cfgDelFormCap(key,f){if(!FORM_REQ[key])return;FORM_REQ[key]=FORM_REQ[key].filter(function(x){return x!==f;});renderCfgCaps();}
 function cfgToggleBasico(f,on){if(on)FORM_BASICO[f]=true;else delete FORM_BASICO[f];}
 function cfgToggleVol(f,on){if(on)FORM_VOL[f]=true;else delete FORM_VOL[f];}
-function cfgSave(){saveFormConfig();toast('✅ Configuración guardada','#00d4ff');closeConfigModal();renderAll();updateBadgeFP();}
+// ── Construye los selects de puesto dinámicamente desde la config ──
+function buildPuestoSelect(){
+  // Reúne todos los puestos: los de la config + los ya usados en trabajadores
+  var allPuestos={};
+  Object.keys(FORM_PUESTO).forEach(function(p){allPuestos[p]=true;});
+  // Puestos "huérfanos" (usados por trabajadores pero no en config) — los conserva
+  trabajadores.forEach(function(t){if(t.puesto) allPuestos[t.puesto]=true;});
+  var lista=Object.keys(allPuestos).sort();
+
+  // Select del modal de trabajador
+  var ws=document.getElementById('w-puesto');
+  if(ws){
+    var cur=ws.value;
+    ws.innerHTML='<option value="">Seleccionar...</option>';
+    lista.forEach(function(p){
+      var o=document.createElement('option');
+      o.value=p; o.textContent=p;
+      ws.appendChild(o);
+    });
+    if(cur) ws.value=cur;
+  }
+
+  // Select del filtro de formaciones pendientes
+  var fps=document.getElementById('fp-puesto');
+  if(fps){
+    var curFP=fps.value;
+    fps.innerHTML='<option value="">Todos los puestos</option>';
+    lista.forEach(function(p){
+      var o=document.createElement('option');
+      o.value=p; o.textContent=p;
+      fps.appendChild(o);
+    });
+    if(curFP) fps.value=curFP;
+  }
+}
+
+// ── Recalcula estado de TODOS los trabajadores al cambiar la config ──
+function recalcularTodosLosTrabajadores(){
+  var changed=[];
+  trabajadores.forEach(function(t){
+    var reqs=getFormReq(t.caps||[],t.puesto);
+    if(!reqs.length){
+      // Sin requisitos → al día si médica ok
+      if(t.form!=='ok'&&t.med!=='no-apto'){
+        t.form='ok';
+        changed.push(t);
+      }
+      return;
+    }
+    var allDone=reqs.every(function(r){
+      return formCompletadas[t.id]&&formCompletadas[t.id][r];
+    });
+    var newForm=allDone?'ok':'pendiente';
+    if(t.form!==newForm){
+      t.form=newForm;
+      changed.push(t);
+    }
+  });
+  if(changed.length){
+    // Guarda los trabajadores modificados en Firebase
+    changed.forEach(function(t){
+      var wData={}; for(var k in t) wData[k]=t[k];
+      saveRecord('trabajadores',wData);
+    });
+    toast('🔄 '+changed.length+' trabajador'+(changed.length===1?'':'es')+' actualizados automáticamente','#7b6fff');
+  }
+  return changed.length;
+}
+
+function cfgSave(){
+  saveFormConfig();
+  // Reconstruye selects con los nuevos puestos
+  buildPuestoSelect();
+  // Recalcula todos los trabajadores con la nueva configuración
+  recalcularTodosLosTrabajadores();
+  toast('✅ Configuración guardada','#00d4ff');
+  closeConfigModal();
+  renderAll();
+  updateBadgeFP();
+}
 function cfgReset(){
   if(!confirm('¿Restaurar valores por defecto? Se perderán los cambios.'))return;
   FORM_REQ=JSON.parse(JSON.stringify(FORM_REQ_DEFAULT));
@@ -4123,21 +4205,18 @@ function cfgReset(){
   FORM_BASICO=JSON.parse(JSON.stringify(FORM_BASICO_DEFAULT));
   FORM_VOL=JSON.parse(JSON.stringify(FORM_VOL_DEFAULT));
   CAPS=[{key:'AZT',col:'red'},{key:'AZT +JO',col:'red'},{key:'REEX',col:'purple'},{key:'TET BT',col:'purple'},{key:'RETRO',col:'green'},{key:'DUMPER',col:'green'},{key:'CAMION GRUA',col:'yellow'},{key:'PEMP',col:'yellow'}];
-  saveFormConfig();cfgTab(_cfgTab);toast('↩ Restaurado por defecto','#f7c948');
+  saveFormConfig();
+  buildPuestoSelect();
+  cfgTab(_cfgTab);
+  toast('↩ Restaurado por defecto','#f7c948');
 }
-function initFab(){var fab=document.getElementById('fab-config');if(fab)fab.style.display=isAdmin()?'flex':'none';}
+function initFab(){
+  var fab=document.getElementById('fab-config');
+  if(fab) fab.style.display=isAdmin()?'flex':'none';
+}
+
 
 </script>
-<div id="fab-config" title="Editar perfiles de formación" onclick="openConfigModal()"
-  style="display:none;position:fixed;bottom:28px;right:24px;z-index:500;
-         width:52px;height:52px;border-radius:50%;
-         background:linear-gradient(135deg,#7b6fff,#00d4ff);
-         box-shadow:0 4px 20px rgba(123,111,255,.55);
-         cursor:pointer;align-items:center;justify-content:center;
-         font-size:22px;transition:transform .2s">
-  ✏️
-</div>
-
 <!-- MODAL CONFIGURACIÓN PERFILES FORMACIÓN -->
 <div class="moverlay" id="modal-config-form">
   <div class="modal" style="max-width:680px;max-height:88vh;overflow-y:auto">
