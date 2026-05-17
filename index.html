@@ -1183,6 +1183,9 @@ function reloadFromFirebase(silent){
   var savedFormDrop = _openDropFormacion;
   var savedWorkerDrop = _openDropWorker;
 
+  // Carga config de formaciones (puestos/caps editables) en el primer load
+  if(!silent) loadFormConfig();
+
   fetch(fbUrl('/.json'), {cache:'no-store'})
   .then(function(r){
     if(!r.ok) throw new Error('HTTP ' + r.status);
@@ -1331,8 +1334,8 @@ var CAPS = [
 ];
 var CAP_CLS={red:'sel-red',purple:'sel-purple',green:'sel-green',yellow:'sel-yellow'};
 
-// ── FORMACIONES REQUERIDAS POR CAPACITACION ───────────────────
-var FORM_REQ = {
+// ── CONFIGURACIÓN DE FORMACIONES (editable, guardada en Firebase) ─
+var FORM_REQ_DEFAULT = {
   'TET BT':     ['60h PRL','2°ELECTRICIDAD','TET BT','ALTURAS AELEC','PAX+INCENDIOS','CONFINADOS','C2 AELEC'],
   'AZT':        ['60h PRL','2°ELECTRICIDAD','TET BT','ALTURAS AELEC','PAX+INCENDIOS','CONFINADOS','C2 AELEC','AZT 60h','EX_IBER'],
   'AZT +JO':    ['60h PRL','2°ELECTRICIDAD','TET BT','ALTURAS AELEC','PAX+INCENDIOS','CONFINADOS','C2 AELEC','AZT 60h','EX_IBER'],
@@ -1342,15 +1345,50 @@ var FORM_REQ = {
   'CAMION GRUA':['CAP','OPERADOR CAMION GRUA'],
   'PEMP':       ['6h APARATOS ELEVADORES','8h PEMP']
 };
-// Formaciones voluntarias (azul)
-var FORM_VOL   = {'CONFINADOS':true};
-// Formaciones "básico" — reborde rojo (obligatorio para el trabajo)
-var FORM_BASICO = {'60h PRL':true,'2°ELECTRICIDAD':true,'2°ALBANILERIA':true};
-// Formaciones adicionales según puesto — siempre se añaden independientemente de caps
-var FORM_PUESTO = {
+var FORM_PUESTO_DEFAULT = {
   'OBRA CIVIL': ['60h PRL','2°ALBANILERIA'],
   'ELECTRICO':  ['60h PRL','2°ELECTRICIDAD']
 };
+var FORM_BASICO_DEFAULT = {'60h PRL':true,'2°ELECTRICIDAD':true,'2°ALBANILERIA':true};
+var FORM_VOL_DEFAULT    = {'CONFINADOS':true};
+
+// Versiones activas (se sobreescriben si hay config guardada en Firebase)
+var FORM_REQ    = JSON.parse(JSON.stringify(FORM_REQ_DEFAULT));
+var FORM_PUESTO = JSON.parse(JSON.stringify(FORM_PUESTO_DEFAULT));
+var FORM_BASICO = JSON.parse(JSON.stringify(FORM_BASICO_DEFAULT));
+var FORM_VOL    = JSON.parse(JSON.stringify(FORM_VOL_DEFAULT));
+
+// Carga configuración personalizada desde Firebase
+function loadFormConfig(){
+  if(!_authToken) return;
+  fetch(fbUrl('/configuracion/formreqs.json'))
+    .then(function(r){return r.json();})
+    .then(function(cfg){
+      if(!cfg) return;
+      if(cfg.form_req)    FORM_REQ    = cfg.form_req;
+      if(cfg.form_puesto) FORM_PUESTO = cfg.form_puesto;
+      if(cfg.form_basico) FORM_BASICO = cfg.form_basico;
+      if(cfg.form_vol)    FORM_VOL    = cfg.form_vol;
+      if(cfg.caps_list)   syncCapsFromConfig(cfg.caps_list);
+    }).catch(function(){});
+}
+
+function saveFormConfig(){
+  var cfg={
+    form_req:    FORM_REQ,
+    form_puesto: FORM_PUESTO,
+    form_basico: FORM_BASICO,
+    form_vol:    FORM_VOL,
+    caps_list:   CAPS.map(function(c){return {key:c.key,col:c.col};})
+  };
+  fetch(fbUrl('/configuracion/formreqs.json'),{method:'PUT',body:JSON.stringify(cfg)}).catch(function(){});
+}
+
+function syncCapsFromConfig(list){
+  if(!list||!list.length) return;
+  CAPS=list.map(function(c){return {key:c.key,col:c.col||'purple'};});
+}
+
 
 // Formaciones completadas por trabajador: { trabajadorId: { 'FORMACION': true, ... } }
 var formCompletadas = {};
@@ -3609,6 +3647,8 @@ function renderAll() {
   renderEnlaces();
   // Si no es admin, elimina del DOM todos los botones de acción
   if(!isAdmin()) purgeEditButtons();
+  // Muestra/oculta FAB de configuración
+  initFab();
 }
 
 // Elimina físicamente del DOM todos los botones de edición/creación para no-admins
@@ -3989,7 +4029,161 @@ if(tbdate) tbdate.textContent=now.toLocaleDateString('es-ES',{weekday:'long',yea
 if(sdate) sdate.textContent=now.toLocaleDateString('es-ES',{month:'short',year:'numeric'});
 // initDB() se llama desde checkSession() tras autenticar
 checkSession();
+
+// ── CONFIGURACIÓN PERFILES FORMACIÓN ─────────────────────────
+var _cfgTab='puestos';
+function openConfigModal(){
+  if(!isAdmin()){toast('Solo el administrador puede editar perfiles','#5b8dee');return;}
+  cfgTab('puestos');
+  document.getElementById('modal-config-form').classList.add('open');
+}
+function closeConfigModal(){document.getElementById('modal-config-form').classList.remove('open');}
+function cfgTab(t){
+  _cfgTab=t;
+  ['puestos','caps','basico'].forEach(function(id){
+    var el=document.getElementById('cfg-'+id);
+    if(el) el.style.display=id===t?'block':'none';
+    var btn=document.getElementById('cfgtab-'+id);
+    if(btn) btn.className=id===t?'btn btn-p btn-sm':'btn btn-g btn-sm';
+  });
+  if(t==='puestos') renderCfgPuestos();
+  if(t==='caps')    renderCfgCaps();
+  if(t==='basico')  renderCfgBasico();
+}
+function renderCfgPuestos(){
+  var c=document.getElementById('cfg-puestos-list');if(!c)return;
+  var html='';
+  Object.keys(FORM_PUESTO).forEach(function(p){
+    html+='<div style="background:rgba(17,26,62,.7);border:1px solid rgba(28,42,94,.7);border-radius:14px;padding:14px;margin-bottom:10px">';
+    html+='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">';
+    html+='<div style="font-weight:700;font-size:13px;color:var(--acc)">🏗 '+esc(p)+'</div>';
+    html+='<button class="btn btn-sm btn-d" onclick="cfgDelPuesto(\''+p.replace(/'/g,"\\'")+'\')" >✕ Eliminar puesto</button></div>';
+    html+='<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px">';
+    (FORM_PUESTO[p]||[]).forEach(function(f){
+      html+='<span style="display:inline-flex;align-items:center;gap:5px;background:rgba(123,111,255,.15);color:var(--acc3);border:1px solid rgba(123,111,255,.3);border-radius:20px;padding:3px 10px;font-size:11px;font-weight:600">'+esc(f)+'<button onclick="cfgDelFormPuesto(\''+p.replace(/'/g,"\\'")+'\',\''+f.replace(/'/g,"\\'")+'\')\" style="background:none;border:none;color:var(--danger);cursor:pointer;font-size:14px;padding:0;line-height:1">×</button></span>';
+    });
+    if(!(FORM_PUESTO[p]||[]).length) html+='<span style="font-size:11px;color:var(--txm)">Sin formaciones asignadas</span>';
+    html+='</div><div style="display:flex;gap:6px"><input id="nfp-'+esc(p)+'" class="finput" placeholder="Nueva formación..." style="flex:1;font-size:12px"><button class="btn btn-p btn-sm" onclick="cfgAddFormPuesto(\''+p.replace(/'/g,"\\'")+'\')">+</button></div></div>';
+  });
+  if(!Object.keys(FORM_PUESTO).length) html='<div style="color:var(--txm);font-size:12px;padding:10px">Sin puestos configurados</div>';
+  c.innerHTML=html;
+}
+function renderCfgCaps(){
+  var c=document.getElementById('cfg-caps-list');if(!c)return;
+  var html='';
+  CAPS.forEach(function(cap){
+    var cls=CAP_CLS[cap.col]||'sel-purple';
+    html+='<div style="background:rgba(17,26,62,.7);border:1px solid rgba(28,42,94,.7);border-radius:14px;padding:14px;margin-bottom:10px">';
+    html+='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">';
+    html+='<span class="cap-badge '+cls+'" style="font-size:12px;padding:4px 12px">'+esc(cap.key)+'</span>';
+    html+='<button class="btn btn-sm btn-d" onclick="cfgDelCap(\''+cap.key.replace(/'/g,"\\'")+'\')">✕ Eliminar</button></div>';
+    html+='<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px">';
+    (FORM_REQ[cap.key]||[]).forEach(function(f){
+      html+='<span style="display:inline-flex;align-items:center;gap:5px;background:rgba(0,212,255,.08);color:var(--acc);border:1px solid rgba(0,212,255,.2);border-radius:20px;padding:3px 10px;font-size:11px;font-weight:600">'+esc(f)+'<button onclick="cfgDelFormCap(\''+cap.key.replace(/'/g,"\\'")+'\',\''+f.replace(/'/g,"\\'")+'\')\" style="background:none;border:none;color:var(--danger);cursor:pointer;font-size:14px;padding:0;line-height:1">×</button></span>';
+    });
+    if(!(FORM_REQ[cap.key]||[]).length) html+='<span style="font-size:11px;color:var(--txm)">Sin formaciones asignadas</span>';
+    html+='</div><div style="display:flex;gap:6px"><input id="nfc-'+esc(cap.key)+'" class="finput" placeholder="Nueva formación..." style="flex:1;font-size:12px"><button class="btn btn-p btn-sm" onclick="cfgAddFormCap(\''+cap.key.replace(/'/g,"\\'")+'\')">+</button></div></div>';
+  });
+  if(!CAPS.length) html='<div style="color:var(--txm);font-size:12px;padding:10px">Sin capacitaciones configuradas</div>';
+  c.innerHTML=html;
+}
+function renderCfgBasico(){
+  var c=document.getElementById('cfg-basico-list');if(!c)return;
+  var allForms={};
+  Object.keys(FORM_PUESTO).forEach(function(p){(FORM_PUESTO[p]||[]).forEach(function(f){allForms[f]=true;});});
+  CAPS.forEach(function(cap){(FORM_REQ[cap.key]||[]).forEach(function(f){allForms[f]=true;});});
+  var forms=Object.keys(allForms).sort();
+  if(!forms.length){c.innerHTML='<div style="color:var(--txm);font-size:12px;padding:10px">Añade puestos y capacitaciones primero</div>';return;}
+  var html='<div style="display:flex;flex-direction:column;gap:7px">';
+  forms.forEach(function(f){
+    var isB=!!FORM_BASICO[f],isV=!!FORM_VOL[f];
+    html+='<div style="display:flex;align-items:center;gap:10px;background:rgba(17,26,62,.5);border:1px solid rgba(28,42,94,.6);border-radius:10px;padding:9px 12px">';
+    html+='<div style="flex:1;font-size:12px;font-weight:500">'+esc(f)+'</div>';
+    html+='<label style="display:flex;align-items:center;gap:5px;font-size:11px;cursor:pointer"><input type="checkbox" '+(isB?'checked':'')+' onchange="cfgToggleBasico(\''+f.replace(/'/g,"\\'")+'\',this.checked)" style="accent-color:var(--danger)"><span style="color:var(--danger)">Básica</span></label>';
+    html+='<label style="display:flex;align-items:center;gap:5px;font-size:11px;cursor:pointer"><input type="checkbox" '+(isV?'checked':'')+' onchange="cfgToggleVol(\''+f.replace(/'/g,"\\'")+'\',this.checked)" style="accent-color:var(--acc3)"><span style="color:var(--acc3)">Voluntaria</span></label>';
+    html+='</div>';
+  });
+  c.innerHTML=html+'</div>';
+}
+function cfgAddPuesto(){var inp=document.getElementById('cfg-new-puesto');var v=(inp.value||'').trim().toUpperCase();if(!v){toast('Escribe el nombre del puesto','#f85149');return;}if(FORM_PUESTO[v]){toast('Ya existe','#f85149');return;}FORM_PUESTO[v]=[];inp.value='';renderCfgPuestos();}
+function cfgDelPuesto(p){if(!confirm('¿Eliminar el puesto "'+p+'" y sus formaciones?'))return;delete FORM_PUESTO[p];renderCfgPuestos();}
+function cfgAddFormPuesto(p){var inp=document.getElementById('nfp-'+p);var v=(inp.value||'').trim();if(!v)return;if(!FORM_PUESTO[p])FORM_PUESTO[p]=[];if(FORM_PUESTO[p].indexOf(v)<0)FORM_PUESTO[p].push(v);inp.value='';renderCfgPuestos();}
+function cfgDelFormPuesto(p,f){if(!FORM_PUESTO[p])return;FORM_PUESTO[p]=FORM_PUESTO[p].filter(function(x){return x!==f;});renderCfgPuestos();}
+function cfgAddCap(){var inp=document.getElementById('cfg-new-cap');var col=document.getElementById('cfg-new-cap-col').value;var v=(inp.value||'').trim().toUpperCase();if(!v){toast('Escribe el nombre','#f85149');return;}if(CAPS.some(function(c){return c.key===v;})){toast('Ya existe','#f85149');return;}CAPS.push({key:v,col:col});FORM_REQ[v]=[];inp.value='';renderCfgCaps();}
+function cfgDelCap(key){if(!confirm('¿Eliminar "'+key+'"?'))return;CAPS=CAPS.filter(function(c){return c.key!==key;});delete FORM_REQ[key];renderCfgCaps();}
+function cfgAddFormCap(key){var inp=document.getElementById('nfc-'+key);var v=(inp.value||'').trim();if(!v)return;if(!FORM_REQ[key])FORM_REQ[key]=[];if(FORM_REQ[key].indexOf(v)<0)FORM_REQ[key].push(v);inp.value='';renderCfgCaps();}
+function cfgDelFormCap(key,f){if(!FORM_REQ[key])return;FORM_REQ[key]=FORM_REQ[key].filter(function(x){return x!==f;});renderCfgCaps();}
+function cfgToggleBasico(f,on){if(on)FORM_BASICO[f]=true;else delete FORM_BASICO[f];}
+function cfgToggleVol(f,on){if(on)FORM_VOL[f]=true;else delete FORM_VOL[f];}
+function cfgSave(){saveFormConfig();toast('✅ Configuración guardada','#00d4ff');closeConfigModal();renderAll();updateBadgeFP();}
+function cfgReset(){
+  if(!confirm('¿Restaurar valores por defecto? Se perderán los cambios.'))return;
+  FORM_REQ=JSON.parse(JSON.stringify(FORM_REQ_DEFAULT));
+  FORM_PUESTO=JSON.parse(JSON.stringify(FORM_PUESTO_DEFAULT));
+  FORM_BASICO=JSON.parse(JSON.stringify(FORM_BASICO_DEFAULT));
+  FORM_VOL=JSON.parse(JSON.stringify(FORM_VOL_DEFAULT));
+  CAPS=[{key:'AZT',col:'red'},{key:'AZT +JO',col:'red'},{key:'REEX',col:'purple'},{key:'TET BT',col:'purple'},{key:'RETRO',col:'green'},{key:'DUMPER',col:'green'},{key:'CAMION GRUA',col:'yellow'},{key:'PEMP',col:'yellow'}];
+  saveFormConfig();cfgTab(_cfgTab);toast('↩ Restaurado por defecto','#f7c948');
+}
+function initFab(){var fab=document.getElementById('fab-config');if(fab)fab.style.display=isAdmin()?'flex':'none';}
+
 </script>
+<div id="fab-config" title="Editar perfiles de formación" onclick="openConfigModal()"
+  style="display:none;position:fixed;bottom:28px;right:24px;z-index:500;
+         width:52px;height:52px;border-radius:50%;
+         background:linear-gradient(135deg,#7b6fff,#00d4ff);
+         box-shadow:0 4px 20px rgba(123,111,255,.55);
+         cursor:pointer;align-items:center;justify-content:center;
+         font-size:22px;transition:transform .2s">
+  ✏️
+</div>
+
+<!-- MODAL CONFIGURACIÓN PERFILES FORMACIÓN -->
+<div class="moverlay" id="modal-config-form">
+  <div class="modal" style="max-width:680px;max-height:88vh;overflow-y:auto">
+    <button class="mclose" onclick="closeConfigModal()">✕</button>
+    <div class="mtitle">⚙️ Perfiles de Formación</div>
+    <div class="msub">Edita formaciones requeridas por puesto y capacitación. Los cambios se guardan en la nube.</div>
+    <div style="display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap">
+      <button id="cfgtab-puestos" class="btn btn-p btn-sm" onclick="cfgTab('puestos')">🏗 Puestos</button>
+      <button id="cfgtab-caps"    class="btn btn-g btn-sm" onclick="cfgTab('caps')">🎖 Capacitaciones</button>
+      <button id="cfgtab-basico"  class="btn btn-g btn-sm" onclick="cfgTab('basico')">📌 Básicos / Voluntarios</button>
+    </div>
+    <div id="cfg-puestos">
+      <div style="font-size:11px;color:var(--txm);margin-bottom:12px">Formaciones exigidas a todos los trabajadores de ese puesto, independientemente de sus capacitaciones.</div>
+      <div id="cfg-puestos-list"></div>
+      <div style="display:flex;gap:8px;margin-top:14px">
+        <input id="cfg-new-puesto" class="finput" placeholder="Nuevo puesto (ej: PINTURA)" style="flex:1">
+        <button class="btn btn-p btn-sm" onclick="cfgAddPuesto()">+ Puesto</button>
+      </div>
+    </div>
+    <div id="cfg-caps" style="display:none">
+      <div style="font-size:11px;color:var(--txm);margin-bottom:12px">Formaciones exigidas por cada capacitación/habilitación especial.</div>
+      <div id="cfg-caps-list"></div>
+      <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap">
+        <input id="cfg-new-cap" class="finput" placeholder="Nueva cap. (ej: GRUA TORRE)" style="flex:1">
+        <select id="cfg-new-cap-col" class="finput" style="width:120px">
+          <option value="purple">Violeta</option>
+          <option value="red">Rojo</option>
+          <option value="green">Verde</option>
+          <option value="yellow">Ámbar</option>
+        </select>
+        <button class="btn btn-p btn-sm" onclick="cfgAddCap()">+ Cap.</button>
+      </div>
+    </div>
+    <div id="cfg-basico" style="display:none">
+      <div style="font-size:11px;color:var(--txm);margin-bottom:12px">
+        <strong>Básico (rojo):</strong> Formación imprescindible para el puesto. &nbsp;
+        <strong>Voluntaria (azul):</strong> Recomendada, no obligatoria.
+      </div>
+      <div id="cfg-basico-list"></div>
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:18px;border-top:1px solid rgba(28,42,94,.5);padding-top:14px">
+      <button class="btn btn-g btn-sm" onclick="cfgReset()">↩ Restaurar por defecto</button>
+      <button class="btn btn-p" onclick="cfgSave()">💾 Guardar cambios</button>
+    </div>
+  </div>
+</div>
 </div><!-- /app-wrapper -->
 </body>
 </html>
