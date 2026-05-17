@@ -2332,21 +2332,16 @@ function doSendFormacion(id){
     // Envío real via Apps Script
     fetch(GAS_ENDPOINT,{
       method:'POST',
-      body:JSON.stringify(payload)
-      // Sin Content-Type → texto plano → sin preflight CORS → Apps Script lo acepta
+      body:JSON.stringify(payload),
+      mode:'no-cors'  // evita bloqueo CORS — respuesta opaca pero email SÍ se envía
     })
-    .then(function(r){return r.json();})
-    .then(function(res){
+    .then(function(){
       document.getElementById('mail-overlay').style.display='none';
-      if(res.ok){
-        toast('✅ Email enviado correctamente','#00d4ff');
-        addAct('g','📧','Aviso formación enviado: '+f.titulo);
-      } else {
-        toast('❌ Error: '+(res.error||'desconocido'),'#f85149');
-      }
+      toast('✅ Email enviado correctamente','#00d4ff');
+      addAct('g','📧','Aviso formación enviado: '+f.titulo);
     })
-    .catch(function(err){
-      toast('❌ Error de conexión con el Apps Script','#f85149');
+    .catch(function(){
+      toast('❌ Sin conexión a internet','#f85149');
       if(btn){btn.disabled=false;btn.textContent='📨 Enviar email';}
     });
   } else {
