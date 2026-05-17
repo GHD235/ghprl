@@ -1365,7 +1365,7 @@ var FORM_BASICO = JSON.parse(JSON.stringify(FORM_BASICO_DEFAULT));
 var FORM_VOL    = JSON.parse(JSON.stringify(FORM_VOL_DEFAULT));
 
 // ── Configuración de envío de email (Google Apps Script Web App) ──
-var GAS_ENDPOINT = 'https://script.google.com/macros/s/AKfycbz-c0neucWNpJkUwmLxpfwFN_and9MGTlyLiqrUgf6ktox77r2DJjj0wIxqBssa9QWKeQ/exec';
+var GAS_ENDPOINT = 'https://script.google.com/macros/s/AKfycbwy6f2NUt1TGsYk8jCKG787eS_2S71IDGjNz7hrKrylM5iAaWE9NB_Jo5hrvBm5Yb9c/exec';
 var GAS_CC       = 'guilleherdo@gmail.com'; // CC por defecto
 
 // Carga configuración personalizada desde Firebase
@@ -2330,20 +2330,25 @@ function doSendFormacion(id){
 
   if(GAS_ENDPOINT){
     // Envío real via Apps Script
-    fetch(GAS_ENDPOINT,{
-      method:'POST',
-      body:JSON.stringify(payload),
-      mode:'no-cors'  // evita bloqueo CORS — respuesta opaca pero email SÍ se envía
-    })
-    .then(function(){
+    // ── IFRAME FORM POST — bypassa CORS completamente ─────────
+    // form POST tradicional → sin restricción CORS en ningún navegador
+    var ifrName='gas-ifr-'+Date.now();
+    var ifr=document.createElement('iframe');
+    ifr.name=ifrName; ifr.style.display='none';
+    document.body.appendChild(ifr);
+    var frm=document.createElement('form');
+    frm.method='POST'; frm.action=GAS_ENDPOINT;
+    frm.target=ifrName; frm.style.display='none';
+    var inp=document.createElement('input');
+    inp.type='hidden'; inp.name='payload'; inp.value=JSON.stringify(payload);
+    frm.appendChild(inp); document.body.appendChild(frm); frm.submit();
+    setTimeout(function(){
       document.getElementById('mail-overlay').style.display='none';
       toast('✅ Email enviado correctamente','#00d4ff');
       addAct('g','📧','Aviso formación enviado: '+f.titulo);
-    })
-    .catch(function(){
-      toast('❌ Sin conexión a internet','#f85149');
-      if(btn){btn.disabled=false;btn.textContent='📨 Enviar email';}
-    });
+      try{document.body.removeChild(frm);}catch(e){}
+      setTimeout(function(){try{document.body.removeChild(ifr);}catch(e){}},3000);
+    },2000);
   } else {
     // Fallback: copia HTML al portapapeles
     document.getElementById('mail-overlay').style.display='none';
@@ -2367,7 +2372,7 @@ function _buildAndCopyHtml(d){
   }
   var filasAsis='';
   if(!d.asistentes.length){filasAsis='<tr><td colspan="4" style="'+ROW0+'text-align:center;color:#888">Sin trabajadores asignados</td></tr>';}
-  else{for(var j=0;j<d.asistentes.length;j+=2){var a1=d.asistentes[j],a2=d.asistentes[j+1],rbg=j%4===0?ROW0:ROW1;filasAsis+='<tr><td style="'+rbg+'font-weight:bold">'+(a1.nombre||'')+'</td><td style="'+rbg+'color:#555">'+(a1.dept||'')+'</td><td style="'+rbg+'font-weight:bold">'+(a2?a2.nombre||'':'')+'</td><td style="'+rbg+'color:#555">'+(a2?a2.dept||'':'')+'</td></tr>';}}
+  else{for(var j=0;j<d.asistentes.length;j++){var a1=d.asistentes[j],rbg=j%2===0?ROW0:ROW1;filasAsis+='<tr><td colspan="4" style="'+rbg+'font-weight:bold;padding:6px 12px;border:1px solid #000">'+(a1.nombre||'')+'</td></tr>';}}
   var tipo=d.tipo==='obligatorio'?'OBLIGATORIA &mdash; Asistencia 100% requerida':'Voluntaria';
   var htmlBody='<div style="font-family:Arial,sans-serif;font-size:11pt;color:#1a1a1a;max-width:750px">'+
     '<table style="width:100%;border-collapse:collapse;margin-bottom:14px"><tr><td style="'+WARN+'">&#9888; <strong>IMPORTANTE:</strong> Se ruega puntualidad. La F.L.C. exige el <strong>100% de asistencia</strong>; en caso de inspecci&oacute;n, los ausentes ser&aacute;n eliminados del registro.</td></tr></table>'+
